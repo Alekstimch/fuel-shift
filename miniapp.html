@@ -373,15 +373,15 @@
     } catch { list.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
   }
 
-  async function respond(id, action) {
+  async function respond(id, responseType) {
     const card = document.getElementById('trf-' + id);
     _lock(card, true);
     try {
-      const res  = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'respondTransfer', id, action }) });
+      const res  = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'respondTransfer', id: id, responseType: responseType }) });
       const data = await res.json();
       if (data.ok) {
         card?.remove();
-        showToast(action === 'confirm' ? '✅ Подтверждено' : '❌ Отклонено');
+        showToast(responseType === 'confirm' ? '✅ Подтверждено' : '❌ Отклонено');
         if (!document.querySelector('.transfer-card'))
           document.getElementById('confirm-list').innerHTML =
             '<div class="empty"><span class="icon">✅</span>Входящих переливов<br>на подтверждение нет</div>';
@@ -395,7 +395,7 @@
     const card = document.getElementById('trf-' + id);
     _lock(card, true);
     try {
-      const res  = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'respondTransfer', id, action:'adjust', liters:+liters }) });
+      const res  = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'respondTransfer', id: id, responseType:'adjust', liters:+liters }) });
       const data = await res.json();
       if (data.ok) { card?.remove(); showToast('✅ Скорректировано: ' + liters + ' л'); }
       else { showToast('Ошибка: ' + data.error); _lock(card, false); }
