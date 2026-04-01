@@ -160,7 +160,15 @@
     }
     .adjust-row input { margin: 0; flex: 1; padding: 11px 12px; font-size: 14px; }
     .adjust-row .btn { flex: none; width: auto; padding: 11px 16px; font-size: 13px; }
-    .empty {
+    .transfer-card--closed {
+      opacity: .6;
+      border-style: dashed;
+    }
+    .status-label {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 8px 0 2px;
+    }
       text-align: center;
       color: var(--muted);
       padding: 48px 20px;
@@ -194,8 +202,9 @@
 
 <div id="auth-screen" style="display:flex">
   <div class="icon">⛽</div>
-  <h1>Перелив топлива</h1>
-  <p id="auth-msg">Загрузка….</p>
+  <h1>Переливы топлива</h1>
+  <div id="auth-spinner" style="color:#8892a4;font-size:14px;margin-top:8px">Загрузка…</div>
+  <p id="auth-msg" style="display:none"></p>
 </div>
 
 <div id="main-screen" style="display:none">
@@ -274,6 +283,7 @@
     }
 
     document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('auth-spinner').style.display = 'none';
     document.getElementById('main-screen').style.display = 'block';
     document.getElementById('user-badge').textContent    = '👤 ' + currentDriver.name;
 
@@ -288,7 +298,10 @@
   }
 
   function showAuth(msg) {
-    document.getElementById('auth-msg').innerHTML = msg;
+    document.getElementById('auth-spinner').style.display = 'none';
+    const p = document.getElementById('auth-msg');
+    p.innerHTML = msg;
+    p.style.display = 'block';
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('main-screen').style.display = 'none';
   }
@@ -353,13 +366,26 @@
       }
 
       list.innerHTML = pending.map(function(t) {
-        const s = allDrivers.find(function(d) { return d.id === t.senderId; });
+        const s       = allDrivers.find(function(d) { return d.id === t.senderId; });
+        const isPending = t.status === 'Создан';
+
+        // Метка статуса для закрытых заявок
+        const statusLabel = {
+          'Подтверждён':   '✅ Подтверждено',
+          'Скорректирован':'✏️ Скорректировано: ' + t.litersFinal + ' л',
+          'Отклонён':      '❌ Отклонено',
+        }[t.status] || t.status;
+
         return `
-          <div class="transfer-card" id="trf-${t.id}">
+          <div class="transfer-card ${isPending ? '' : 'transfer-card--closed'}" id="trf-${t.id}">
             <div class="from">От водителя</div>
             <div class="sender-name">${s ? s.name : t.senderId}</div>
             <div class="amount">${t.litersClaimed} л</div>
-            <div class="meta">📅 ${t.date}</div>
+            <div class="meta">
+              📅 Дата перелива: ${t.transferDate || '—'}<br>
+              🕐 Заявка создана: ${t.createdAt || '—'}
+            </div>
+            ${isPending ? `
             <div class="action-row">
               <button class="btn btn-success" onclick="respond('${t.id}','confirm')">✓ Подтвердить</button>
               <button class="btn btn-danger"  onclick="respond('${t.id}','reject')">✕ Отклонить</button>
@@ -368,6 +394,10 @@
               <input type="number" id="adj-${t.id}" placeholder="Другой объём, л" min="1" step="1">
               <button class="btn btn-warn" onclick="respondAdjust('${t.id}')">Изменить</button>
             </div>
+            ` : `
+            <div class="status-label">${statusLabel}</div>
+            ${t.responseTime ? '<div class="meta" style="margin-top:4px">Ответ: ' + t.responseTime + '</div>' : ''}
+            `}
           </div>`;
       }).join('');
     } catch { list.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
@@ -377,15 +407,18 @@
     const card = document.getElementById('trf-' + id);
     _lock(card, true);
     try {
-      const res  = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'respondTransfer', id: id, responseType: responseType }) });
+      const res  = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'respondTransfer', id: id, responseType: responseType }),
+      });
       const data = await res.json();
       if (data.ok) {
-        card?.remove();
         showToast(responseType === 'confirm' ? '✅ Подтверждено' : '❌ Отклонено');
-        if (!document.querySelector('.transfer-card'))
-          document.getElementById('confirm-list').innerHTML =
-            '<div class="empty"><span class="icon">✅</span>Входящих переливов<br>на подтверждение нет</div>';
-      } else { showToast('Ошибка: ' + data.error); _lock(card, false); }
+        loadIncoming(); // перезагружаем список чтобы показать обновлённый статус
+      } else {
+        showToast('Ошибка: ' + (data.error || 'неизвестно'));
+        _lock(card, false);
+      }
     } catch { showToast('Ошибка сети'); _lock(card, false); }
   }
 
@@ -395,10 +428,18 @@
     const card = document.getElementById('trf-' + id);
     _lock(card, true);
     try {
-      const res  = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'respondTransfer', id: id, responseType:'adjust', liters:+liters }) });
+      const res  = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'respondTransfer', id: id, responseType: 'adjust', liters: +liters }),
+      });
       const data = await res.json();
-      if (data.ok) { card?.remove(); showToast('✅ Скорректировано: ' + liters + ' л'); }
-      else { showToast('Ошибка: ' + data.error); _lock(card, false); }
+      if (data.ok) {
+        showToast('✅ Скорректировано: ' + liters + ' л');
+        loadIncoming();
+      } else {
+        showToast('Ошибка: ' + (data.error || 'неизвестно'));
+        _lock(card, false);
+      }
     } catch { showToast('Ошибка сети'); _lock(card, false); }
   }
 
