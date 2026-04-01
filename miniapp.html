@@ -189,7 +189,7 @@
 </head>
 <body>
 
-<div id="auth-screen" style="display:none">
+<div id="auth-screen" style="display:flex">
   <div class="icon">⛽</div>
   <h1>Переливы топлива</h1>
   <p id="auth-msg">Откройте приложение через Telegram-бота.</p>
@@ -257,7 +257,7 @@
     // Ищем себя по tg-нику из листа «Водители»
     if (tgUsername) {
       currentDriver = allDrivers.find(function(d) {
-        return d.tg.replace('@','').toLowerCase() === tgUsername;
+        return (d.tg || '').replace('@','').toLowerCase() === tgUsername;
       }) || null;
     }
 
