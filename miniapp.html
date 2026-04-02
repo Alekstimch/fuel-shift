@@ -7,204 +7,87 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg: #0f1117;
-      --card: #1a1d2e;
-      --border: #2a2d3e;
-      --accent: #4f8ef7;
-      --accent2: #3dd68c;
-      --danger: #f74f4f;
-      --warn: #f7a84f;
-      --text: #e8eaf0;
-      --muted: #8892a4;
-      --radius: 12px;
-      --font: 'Segoe UI', system-ui, sans-serif;
+      --bg:#0f1117;--card:#1a1d2e;--border:#2a2d3e;
+      --accent:#4f8ef7;--accent2:#3dd68c;--danger:#f74f4f;--warn:#f7a84f;
+      --text:#e8eaf0;--muted:#8892a4;--radius:12px;
+      --font:'Segoe UI',system-ui,sans-serif;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 16px;
-      padding-bottom: 40px;
-    }
-    h1 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
-    #auth-screen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 70vh;
-      text-align: center;
-      gap: 14px;
-      background: #0f1117;
-      color: #e8eaf0;
-    }
-    #auth-screen h1 { color: #e8eaf0; }
-    #auth-screen .icon { font-size: 52px; }
-    #auth-screen p { color: #8892a4; font-size: 14px; line-height: 1.6; max-width: 280px; }
-    .user-badge {
-      background: rgba(79,142,247,.12);
-      border: 1px solid rgba(79,142,247,.3);
-      border-radius: 100px;
-      padding: 6px 14px;
-      font-size: 13px;
-      color: var(--accent);
-      margin-bottom: 16px;
-      display: inline-block;
-    }
-    .tabs { display: flex; gap: 6px; margin-bottom: 20px; }
-    .tab-btn {
-      flex: 1;
-      padding: 10px;
-      border-radius: var(--radius);
-      border: 1.5px solid var(--border);
-      background: var(--card);
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .2s;
-    }
-    .tab-btn.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(79,142,247,.1);
-    }
-    .screen { display: none; }
-    .screen.active { display: block; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 12px;
-    }
-    label {
-      display: block;
-      font-size: 11px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .6px;
-    }
-    select, input[type="number"], input[type="date"] {
-      width: 100%;
-      padding: 12px 14px;
-      background: rgba(255,255,255,.05);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 15px;
-      font-family: var(--font);
-      margin-bottom: 14px;
-      -webkit-appearance: none;
-    }
-    select:focus, input:focus { outline: none; border-color: var(--accent); }
-    select option { background: #1a1d2e; }
-    .btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: var(--radius);
-      border: none;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity .15s, transform .1s;
-    }
-    .btn:active { opacity: .8; transform: scale(.98); }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-primary { background: var(--accent);  color: #fff; }
-    .btn-success { background: var(--accent2); color: #111; }
-    .btn-danger  { background: var(--danger);  color: #fff; }
-    .btn-warn    { background: var(--warn);    color: #111; }
-    .transfer-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      margin-bottom: 10px;
-    }
-    .transfer-card .from {
-      font-size: 11px;
-      color: var(--muted);
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-    }
-    .transfer-card .sender-name {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .transfer-card .amount {
-      font-size: 30px;
-      font-weight: 800;
-      color: var(--accent);
-      margin-bottom: 4px;
-      line-height: 1;
-    }
-    .transfer-card .meta {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 14px;
-    }
-    .action-row { display: flex; gap: 8px; }
-    .action-row .btn { padding: 11px; font-size: 13px; }
-    .adjust-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-      align-items: stretch;
-    }
-    .adjust-row input { margin: 0; flex: 1; padding: 11px 12px; font-size: 14px; }
-    .adjust-row .btn { flex: none; width: auto; padding: 11px 16px; font-size: 13px; }
-    .transfer-card--closed {
-      opacity: .6;
-      border-style: dashed;
-    }
-    .status-label {
-      font-size: 14px;
-      font-weight: 700;
-      padding: 8px 0 2px;
-    }
-      text-align: center;
-      color: var(--muted);
-      padding: 48px 20px;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    .empty .icon { font-size: 36px; display: block; margin-bottom: 10px; }
-    .spinner { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
-    .toast {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%) translateY(8px);
-      background: rgba(25,28,42,.97);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 20px;
-      border-radius: 100px;
-      font-size: 14px;
-      font-weight: 600;
-      opacity: 0;
-      transition: opacity .25s, transform .25s;
-      pointer-events: none;
-      z-index: 999;
-      white-space: nowrap;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:16px;padding-bottom:40px}
+
+    /* СТАРТОВЫЙ ЭКРАН */
+    #auth-screen{display:flex;flex-direction:column;justify-content:center;min-height:80vh;padding:32px 24px}
+    .splash-header{display:flex;align-items:center;gap:14px;margin-bottom:32px}
+    .splash-bar{width:4px;height:56px;background:var(--accent);border-radius:2px;flex-shrink:0}
+    .splash-label{font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+    .splash-title{font-size:28px;font-weight:700;color:var(--text);line-height:1.1}
+    .splash-body{font-size:13px;color:var(--muted);line-height:1.65;padding-left:18px;border-left:1px solid var(--border);margin-bottom:32px}
+    .splash-status{padding-left:18px;font-size:11px;color:var(--accent);letter-spacing:1px}
+    #auth-msg{display:none;margin-top:16px;padding:14px 16px;background:rgba(247,79,79,.1);border:1px solid rgba(247,79,79,.3);border-radius:var(--radius);font-size:14px;color:#f7a8a8;line-height:1.5}
+
+    /* СТАТУС-БАННЕР */
+    #status-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;gap:16px;padding:24px}
+    .status-icon{font-size:72px;line-height:1}
+    .status-title{font-size:26px;font-weight:700;color:var(--text)}
+    .status-sub{font-size:15px;color:var(--muted);max-width:260px;line-height:1.6;white-space:pre-line}
+    .status-error-detail{display:none;font-size:12px;color:var(--danger);background:rgba(247,79,79,.08);border:1px solid rgba(247,79,79,.2);border-radius:8px;padding:10px 14px;max-width:280px;word-break:break-word;text-align:left;line-height:1.5}
+    #status-back-btn{margin-top:8px;padding:12px 32px;background:transparent;border:1.5px solid var(--border);border-radius:var(--radius);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer}
+
+    /* ОСНОВНОЙ ЭКРАН */
+    .user-badge{background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.3);border-radius:100px;padding:6px 14px;font-size:13px;color:var(--accent);margin-bottom:16px;display:inline-block}
+    .tabs{display:flex;gap:6px;margin-bottom:20px}
+    .tab-btn{flex:1;padding:10px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+    .tab-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.1)}
+    .screen{display:none}.screen.active{display:block}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+    label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+    select,input[type="number"],input[type="date"]{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;font-family:var(--font);margin-bottom:14px;-webkit-appearance:none}
+    select:focus,input:focus{outline:none;border-color:var(--accent)}
+    select option{background:#1a1d2e}
+    .btn{width:100%;padding:14px;border-radius:var(--radius);border:none;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s}
+    .btn:active{opacity:.8;transform:scale(.98)}.btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-primary{background:var(--accent);color:#fff}.btn-success{background:var(--accent2);color:#111}
+    .btn-danger{background:var(--danger);color:#fff}.btn-warn{background:var(--warn);color:#111}
+
+    /* КАРТОЧКИ ПЕРЕЛИВОВ */
+    .transfer-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px}
+    .transfer-card .from{font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+    .transfer-card .sender-name{font-size:15px;font-weight:600;margin-bottom:2px}
+    .transfer-card .sender-car{font-size:12px;color:var(--muted);margin-bottom:10px}
+    .transfer-card .amount{font-size:30px;font-weight:800;color:var(--accent);margin-bottom:4px;line-height:1}
+    .transfer-card .meta{font-size:13px;color:var(--muted);margin-bottom:14px}
+    .action-row{display:flex;gap:8px}.action-row .btn{padding:11px;font-size:13px}
+    .adjust-row{display:flex;gap:8px;margin-top:10px;align-items:stretch}
+    .adjust-row input{margin:0;flex:1;padding:11px 12px;font-size:14px}
+    .adjust-row .btn{flex:none;width:auto;padding:11px 16px;font-size:13px}
+    .transfer-card--closed{opacity:.6;border-style:dashed}
+    .closed-status{font-size:14px;font-weight:700;padding:6px 0 2px}
+    .empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:14px;line-height:1.6}
+    .empty .icon{font-size:36px;display:block;margin-bottom:10px}
+    .spinner{text-align:center;padding:40px;color:var(--muted);font-size:14px}
   </style>
 </head>
 <body>
 
-<div id="auth-screen" style="display:flex">
-  <div class="icon">⛽</div>
-  <h1>Переливы топлива</h1>
-  <div id="auth-spinner" style="color:#8892a4;font-size:14px;margin-top:8px">Загрузка…</div>
-  <p id="auth-msg" style="display:none"></p>
+<div id="auth-screen">
+  <div class="splash-header">
+    <div class="splash-bar"></div>
+    <div>
+      <div class="splash-label">FuelShift</div>
+      <div class="splash-title">Переливы<br>топлива</div>
+    </div>
+  </div>
+  <div class="splash-body">Авторизация через Telegram.<br>Учёт ведётся по вахтам.</div>
+  <div class="splash-status" id="auth-spinner">ЗАГРУЗКА…</div>
+  <div id="auth-msg"></div>
+</div>
+
+<div id="status-screen">
+  <div class="status-icon" id="status-icon">✅</div>
+  <div class="status-title" id="status-title"></div>
+  <div class="status-sub" id="status-sub"></div>
+  <div class="status-error-detail" id="status-error-detail"></div>
+  <button id="status-back-btn" onclick="hideStatus()">← Назад</button>
 </div>
 
 <div id="main-screen" style="display:none">
@@ -213,246 +96,231 @@
     <button class="tab-btn active" onclick="switchTab('create')">➕ Создать</button>
     <button class="tab-btn"        onclick="switchTab('confirm')">📥 Входящие</button>
   </div>
-
   <div class="screen active" id="screen-create">
     <div class="card">
       <label>Кому переливаете</label>
-      <select id="receiver">
-        <option value="">— выберите водителя —</option>
-      </select>
+      <select id="receiver"><option value="">— выберите водителя —</option></select>
       <label>Литров</label>
       <input type="number" id="liters-create" placeholder="например, 80" min="1" max="2000" step="1">
       <label>Дата перелива</label>
       <input type="date" id="date-create">
-      <button class="btn btn-primary" id="btn-send" onclick="submitCreate()">
-        Отправить на подтверждение
-      </button>
+      <button class="btn btn-primary" id="btn-send" onclick="submitCreate()">Отправить на подтверждение</button>
     </div>
   </div>
-
   <div class="screen" id="screen-confirm">
     <div id="confirm-list"><div class="spinner">Загрузка…</div></div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-
 <script>
-  // ============================================================
-  // ▼▼▼ ЕДИНСТВЕННАЯ СТРОКА КОТОРУЮ НУЖНО ЗАМЕНИТЬ ▼▼▼
+  // ▼▼▼ ВСТАВЬТЕ URL ПОСЛЕ ПУБЛИКАЦИИ APPS SCRIPT ▼▼▼
   const API_URL = 'https://script.google.com/macros/s/AKfycbwzpMLD-ehBtfD24RKxwLM21yqOrAPc-VvJaiioM6jXGVgHJklRoVlVlrKtJRgeYaXr/exec';
-  // ▲▲▲ Вставьте URL после публикации Apps Script Web App ▲▲▲
-  // ============================================================
+  // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-  const tg         = window.Telegram?.WebApp;
-  const tgUser     = tg?.initDataUnsafe?.user;
-  const tgUsername = (tgUser?.username || '').toLowerCase();
-
+  const tg = window.Telegram?.WebApp;
+  const tgUsername = (tg?.initDataUnsafe?.user?.username || '').toLowerCase();
   if (tg) { tg.ready(); tg.expand(); }
 
-  let currentDriver = null;
-  let allDrivers    = [];
+  let currentDriver = null, allDrivers = [], lastTab = 'create';
 
-  // ---- Инициализация ----
   async function init() {
     document.getElementById('date-create').valueAsDate = new Date();
-
     try {
       const res = await fetch(API_URL + '?action=getDrivers');
       allDrivers = await res.json();
-      if (!Array.isArray(allDrivers)) throw new Error();
-    } catch {
-      showAuth('Не удалось подключиться.<br>Проверьте настройки Apps Script.');
+      if (!Array.isArray(allDrivers)) throw new Error('Некорректный ответ');
+    } catch(e) {
+      showAuthError('Не удалось подключиться к серверу.<br>Проверьте настройки Apps Script.');
+      logError('init', e.message);
       return;
     }
 
-    // Ищем себя по tg-нику из листа «Водители»
     if (tgUsername) {
-      currentDriver = allDrivers.find(function(d) {
-        return (d.tg || '').replace('@','').toLowerCase() === tgUsername;
-      }) || null;
+      currentDriver = allDrivers.find(d =>
+        (d.tg||'').replace('@','').toLowerCase() === tgUsername
+      ) || null;
     }
 
     if (!currentDriver) {
-      showAuth(
-        tgUsername
-          ? 'Ваш @' + tgUsername + ' не найден в таблице.<br>Попросите руководителя добавить вас.'
-          : 'Откройте через бота в Telegram.'
-      );
+      showAuthError(tgUsername
+        ? `Ваш @${tgUsername} не найден в таблице.<br>Попросите руководителя добавить вас.`
+        : 'Откройте через бота в Telegram.');
       return;
     }
 
     document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('auth-spinner').style.display = 'none';
     document.getElementById('main-screen').style.display = 'block';
-    document.getElementById('user-badge').textContent    = '👤 ' + currentDriver.name;
+    document.getElementById('user-badge').textContent = '👤 ' + currentDriver.name;
 
     const sel = document.getElementById('receiver');
-    allDrivers
-      .filter(function(d) { return d.id !== currentDriver.id; })
-      .forEach(function(d) {
-        const o = document.createElement('option');
-        o.value = d.id; o.textContent = d.name;
-        sel.appendChild(o);
-      });
-  }
-
-  function showAuth(msg) {
-    document.getElementById('auth-spinner').style.display = 'none';
-    const p = document.getElementById('auth-msg');
-    p.innerHTML = msg;
-    p.style.display = 'block';
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('main-screen').style.display = 'none';
-  }
-
-  // ---- Вкладки ----
-  function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(function(b, i) {
-      b.classList.toggle('active', (i === 0) === (tab === 'create'));
+    allDrivers.filter(d => d.id !== currentDriver.id).forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.id;
+      o.textContent = d.name + (d.car ? ' — ' + d.car : '');
+      sel.appendChild(o);
     });
-    document.getElementById('screen-create').classList.toggle('active',  tab === 'create');
-    document.getElementById('screen-confirm').classList.toggle('active', tab === 'confirm');
-    if (tab === 'confirm') loadIncoming();
   }
 
-  // ---- Создать перелив ----
+  function showAuthError(msg) {
+    document.getElementById('auth-spinner').style.display = 'none';
+    const el = document.getElementById('auth-msg');
+    el.innerHTML = msg; el.style.display = 'block';
+  }
+
+  function showStatus({ ok, title, sub='', errorDetail='' }) {
+    document.getElementById('main-screen').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'none';
+    const s = document.getElementById('status-screen');
+    s.style.display = 'flex';
+    document.getElementById('status-icon').textContent  = ok ? '✅' : '❌';
+    document.getElementById('status-title').textContent = title;
+    document.getElementById('status-sub').textContent   = sub;
+    const errEl = document.getElementById('status-error-detail');
+    if (!ok && errorDetail) { errEl.textContent = errorDetail; errEl.style.display = 'block'; }
+    else errEl.style.display = 'none';
+  }
+
+  function hideStatus() {
+    document.getElementById('status-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display   = 'block';
+    if (lastTab === 'create') {
+      document.getElementById('liters-create').value = '';
+      document.getElementById('receiver').value = '';
+      document.getElementById('date-create').valueAsDate = new Date();
+    } else {
+      switchTab('confirm');
+    }
+  }
+
+  function switchTab(tab) {
+    lastTab = tab;
+    document.querySelectorAll('.tab-btn').forEach((b,i) =>
+      b.classList.toggle('active', (i===0)===(tab==='create')));
+    document.getElementById('screen-create').classList.toggle('active',  tab==='create');
+    document.getElementById('screen-confirm').classList.toggle('active', tab==='confirm');
+    if (tab==='confirm') loadIncoming();
+  }
+
   async function submitCreate() {
     const receiverId = document.getElementById('receiver').value;
     const liters     = document.getElementById('liters-create').value;
     const date       = document.getElementById('date-create').value;
-
-    if (!receiverId)              return showToast('Выберите получателя');
-    if (!liters || +liters <= 0)  return showToast('Введите количество литров');
-    if (!date)                    return showToast('Укажите дату');
+    if (!receiverId)            return showStatus({ok:false, title:'Выберите получателя'});
+    if (!liters||+liters<=0)    return showStatus({ok:false, title:'Введите количество литров'});
+    if (!date)                  return showStatus({ok:false, title:'Укажите дату'});
 
     const btn = document.getElementById('btn-send');
-    btn.disabled = true; btn.textContent = 'Отправка…';
-
+    btn.disabled=true; btn.textContent='Отправка…';
     try {
-      const res  = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'createTransfer',
-          senderId:  currentDriver.id,
-          receiverId, liters: +liters, date,
-          createdBy: currentDriver.id,
-        }),
+      const res = await fetch(API_URL, {
+        method:'POST',
+        body: JSON.stringify({action:'createTransfer', senderId:currentDriver.id, senderName:currentDriver.name, receiverId, liters:+liters, date}),
       });
       const data = await res.json();
       if (data.ok) {
-        showToast('✅ Отправлено на подтверждение');
-        document.getElementById('liters-create').value = '';
-        document.getElementById('receiver').value      = '';
+        const recv = allDrivers.find(d=>d.id===receiverId);
+        showStatus({ok:true, title:'Отправлено', sub:`${liters} л → ${recv?.name||receiverId}\nОжидает подтверждения`});
       } else {
-        showToast('Ошибка: ' + (data.error || 'неизвестно'));
+        showStatus({ok:false, title:'Ошибка отправки', sub:'Попробуйте ещё раз', errorDetail:data.error||'Неизвестная ошибка'});
+        logError('createTransfer', data.error);
       }
-    } catch { showToast('Ошибка сети'); }
-    finally  { btn.disabled = false; btn.textContent = 'Отправить на подтверждение'; }
+    } catch(e) {
+      showStatus({ok:false, title:'Ошибка сети', sub:'Проверьте соединение', errorDetail:e.message});
+      logError('createTransfer/network', e.message);
+    } finally {
+      btn.disabled=false; btn.textContent='Отправить на подтверждение';
+    }
   }
 
-  // ---- Входящие переливы ----
   async function loadIncoming() {
     const list = document.getElementById('confirm-list');
     list.innerHTML = '<div class="spinner">Загрузка…</div>';
-
     try {
-      const res     = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id));
-      const pending = await res.json();
-
-      if (!Array.isArray(pending) || !pending.length) {
-        list.innerHTML = '<div class="empty"><span class="icon">✅</span>Входящих переливов<br>на подтверждение нет</div>';
+      const res = await fetch(API_URL+'?action=getTransfers&driverId='+encodeURIComponent(currentDriver.id));
+      const items = await res.json();
+      if (!Array.isArray(items)||!items.length) {
+        list.innerHTML='<div class="empty"><span class="icon">✅</span>Входящих переливов<br>на подтверждение нет</div>';
         return;
       }
-
-      list.innerHTML = pending.map(function(t) {
-        const s       = allDrivers.find(function(d) { return d.id === t.senderId; });
-        const isPending = t.status === 'Создан';
-
-        // Метка статуса для закрытых заявок
-        const statusLabel = {
-          'Подтверждён':   '✅ Подтверждено',
-          'Скорректирован':'✏️ Скорректировано: ' + t.litersFinal + ' л',
-          'Отклонён':      '❌ Отклонено',
-        }[t.status] || t.status;
-
-        return `
-          <div class="transfer-card ${isPending ? '' : 'transfer-card--closed'}" id="trf-${t.id}">
-            <div class="from">От водителя</div>
-            <div class="sender-name">${s ? s.name : t.senderId}</div>
-            <div class="amount">${t.litersClaimed} л</div>
-            <div class="meta">
-              📅 Дата перелива: ${t.transferDate || '—'}<br>
-              🕐 Заявка создана: ${t.createdAt || '—'}
-            </div>
-            ${isPending ? `
-            <div class="action-row">
-              <button class="btn btn-success" onclick="respond('${t.id}','confirm')">✓ Подтвердить</button>
-              <button class="btn btn-danger"  onclick="respond('${t.id}','reject')">✕ Отклонить</button>
-            </div>
-            <div class="adjust-row">
-              <input type="number" id="adj-${t.id}" placeholder="Другой объём, л" min="1" step="1">
-              <button class="btn btn-warn" onclick="respondAdjust('${t.id}')">Изменить</button>
-            </div>
-            ` : `
-            <div class="status-label">${statusLabel}</div>
-            ${t.responseTime ? '<div class="meta" style="margin-top:4px">Ответ: ' + t.responseTime + '</div>' : ''}
-            `}
-          </div>`;
+      list.innerHTML = items.map(t => {
+        const sender = allDrivers.find(d=>d.id===t.senderId);
+        const car    = t.senderCar||(sender?.car)||'';
+        const isPending = t.status==='Создан';
+        const statusLabel = {'Подтверждён':'✅ Подтверждено','Скорректирован':'✏️ Скорректировано: '+t.litersFinal+' л','Отклонён':'❌ Отклонено'}[t.status]||t.status;
+        return `<div class="transfer-card ${isPending?'':'transfer-card--closed'}" id="trf-${t.id}">
+          <div class="from">От водителя</div>
+          <div class="sender-name">${sender?sender.name:t.senderId}</div>
+          ${car?`<div class="sender-car">🚛 ${car}</div>`:''}
+          <div class="amount">${t.litersClaimed} л</div>
+          <div class="meta">📅 ${t.transferDate||'—'}&nbsp;&nbsp;🕐 ${t.createdAt||'—'}</div>
+          ${isPending?`
+          <div class="action-row">
+            <button class="btn btn-success" onclick="respond('${t.id}','confirm')">✓ Подтвердить</button>
+            <button class="btn btn-danger"  onclick="respond('${t.id}','reject')">✕ Отклонить</button>
+          </div>
+          <div class="adjust-row">
+            <input type="number" id="adj-${t.id}" placeholder="Другой объём, л" min="1" step="1">
+            <button class="btn btn-warn" onclick="respondAdjust('${t.id}')">Изменить</button>
+          </div>`:`<div class="closed-status">${statusLabel}</div>`}
+        </div>`;
       }).join('');
-    } catch { list.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+    } catch(e) {
+      list.innerHTML='<div class="empty">Ошибка загрузки</div>';
+      logError('loadIncoming', e.message);
+    }
   }
 
   async function respond(id, responseType) {
-    const card = document.getElementById('trf-' + id);
-    _lock(card, true);
+    const card = document.getElementById('trf-'+id);
+    _lock(card,true);
     try {
-      const res  = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'respondTransfer', id: id, responseType: responseType }),
-      });
+      const res = await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'respondTransfer',id,responseType,responderName:currentDriver.name})});
       const data = await res.json();
       if (data.ok) {
-        showToast(responseType === 'confirm' ? '✅ Подтверждено' : '❌ Отклонено');
-        loadIncoming(); // перезагружаем список чтобы показать обновлённый статус
+        lastTab='confirm';
+        showStatus({ok:true, title:responseType==='confirm'?'Подтверждено':'Отклонено',
+          sub:responseType==='confirm'?'Перелив учтён в расчёте вахты':'Перелив не будет учтён в расчёте'});
       } else {
-        showToast('Ошибка: ' + (data.error || 'неизвестно'));
-        _lock(card, false);
+        showStatus({ok:false,title:'Ошибка',errorDetail:data.error||''});
+        logError('respondTransfer',data.error); _lock(card,false);
       }
-    } catch { showToast('Ошибка сети'); _lock(card, false); }
+    } catch(e) {
+      showStatus({ok:false,title:'Ошибка сети',errorDetail:e.message});
+      logError('respondTransfer/network',e.message); _lock(card,false);
+    }
   }
 
   async function respondAdjust(id) {
-    const liters = document.getElementById('adj-' + id)?.value;
-    if (!liters || +liters <= 0) return showToast('Введите объём');
-    const card = document.getElementById('trf-' + id);
-    _lock(card, true);
+    const liters = document.getElementById('adj-'+id)?.value;
+    if (!liters||+liters<=0) return showStatus({ok:false,title:'Введите объём'});
+    const card = document.getElementById('trf-'+id);
+    _lock(card,true);
     try {
-      const res  = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'respondTransfer', id: id, responseType: 'adjust', liters: +liters }),
-      });
+      const res = await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'respondTransfer',id,responseType:'adjust',liters:+liters,responderName:currentDriver.name})});
       const data = await res.json();
       if (data.ok) {
-        showToast('✅ Скорректировано: ' + liters + ' л');
-        loadIncoming();
+        lastTab='confirm';
+        showStatus({ok:true,title:'Скорректировано',sub:`Принято ${liters} л вместо заявленного объёма`});
       } else {
-        showToast('Ошибка: ' + (data.error || 'неизвестно'));
-        _lock(card, false);
+        showStatus({ok:false,title:'Ошибка',errorDetail:data.error||''});
+        logError('respondAdjust',data.error); _lock(card,false);
       }
-    } catch { showToast('Ошибка сети'); _lock(card, false); }
+    } catch(e) {
+      showStatus({ok:false,title:'Ошибка сети',errorDetail:e.message});
+      logError('respondAdjust/network',e.message); _lock(card,false);
+    }
   }
 
-  function _lock(card, state) {
-    card?.querySelectorAll('button').forEach(function(b) { b.disabled = state; });
-  }
+  function _lock(card,state) { card?.querySelectorAll('button').forEach(b=>b.disabled=state); }
 
-  function showToast(msg) {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(el._t);
-    el._t = setTimeout(function() { el.classList.remove('show'); }, 2800);
+  async function logError(context, message) {
+    try {
+      await fetch(API_URL,{method:'POST',body:JSON.stringify({
+        action:'logError', context, message,
+        user:currentDriver?.name||tgUsername||'unknown',
+        ts:new Date().toISOString()
+      })});
+    } catch {}
   }
 
   init();
