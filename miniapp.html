@@ -156,7 +156,7 @@
     allDrivers.filter(d => d.id !== currentDriver.id).forEach(d => {
       const o = document.createElement('option');
       o.value = d.id;
-      o.textContent = d.name + (d.car ? ' — ' + d.car : '');
+      o.textContent = d.name + (d.car ? ', ' + d.car : '');
       sel.appendChild(o);
     });
   }
