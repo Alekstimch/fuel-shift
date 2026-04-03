@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FuelShift — Дашборд</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:         #0d1117;
+  --surface:    #161b22;
+  --surface2:   #1c2128;
+  --surface3:   #21262d;
+  --border:     #30363d;
+  --border2:    #21262d;
+  --accent:     #388bfd;
+  --accent-dim: rgba(56,139,253,.12);
+  --green:      #3fb950;
+  --green-dim:  rgba(63,185,80,.12);
+  --red:        #f85149;
+  --red-dim:    rgba(248,81,73,.10);
+  --yellow:     #d29922;
+  --yellow-dim: rgba(210,153,34,.12);
+  --text:       #e6edf3;
+  --text2:      #8b949e;
+  --text3:      #6e7681;
+  --mono:       'IBM Plex Mono', monospace;
+  --sans:       'IBM Plex Sans', sans-serif;
+  --radius:     10px;
+  --radius-sm:  6px;
+  --sidebar-w:  260px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── АНИМАЦИИ ────────────────────────────────────────── */
+@keyframes fadeUp  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes spin    { to { transform:rotate(360deg); } }
+@keyframes pulse   { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+
+.fu  { animation: fadeUp  .22s ease both; }
+.fu1 { animation: fadeUp  .22s .04s ease both; }
+.fu2 { animation: fadeUp  .22s .08s ease both; }
+.fu3 { animation: fadeUp  .22s .12s ease both; }
+.fu4 { animation: fadeUp  .22s .16s ease both; }
+.fu5 { animation: fadeUp  .22s .20s ease both; }
+.slide { animation: slideIn .25s ease both; }
+
+/* ── TOPBAR ──────────────────────────────────────────── */
+.topbar {
+  height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.topbar-logo {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-logo-dot {
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.topbar-title {
+  font-size: 13px;
+  color: var(--text3);
+  flex: 1;
+}
+
+.topbar-updated {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.topbar-updated-dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.btn-refresh {
+  padding: 6px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+.btn-refresh.loading svg { animation: spin .7s linear infinite; }
+
+/* ── LAYOUT ──────────────────────────────────────────── */
+.layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── MAIN AREA ───────────────────────────────────────── */
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* ── DETAIL PANEL ────────────────────────────────────── */
+.detail-panel {
+  width: 0;
+  border-left: 1px solid transparent;
+  background: var(--surface);
+  overflow: hidden;
+  transition: width .25s ease, border-color .25s ease;
+  flex-shrink: 0;
+}
+
+.detail-panel.open {
+  width: 480px;
+  border-color: var(--border);
+}
+
+.detail-inner {
+  width: 480px;
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* ── LOADING STATE ───────────────────────────────────── */
+#loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 200;
+}
+
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+.loading-text {
+  font-size: 13px;
+  color: var(--text2);
+  animation: pulse 1.6s ease-in-out infinite;
+  font-family: var(--mono);
+}
+
+/* ── ERROR STATE ─────────────────────────────────────── */
+#error-state {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  gap: 12px;
+}
+#error-state.show { display: flex; }
+.error-icon  { font-size: 48px; }
+.error-title { font-size: 20px; font-weight: 700; }
+.error-sub   { font-size: 14px; color: var(--text2); max-width: 320px; line-height: 1.6; }
+.btn-retry {
+  padding: 10px 24px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  margin-top: 8px;
+}
+.btn-retry:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── SUMMARY CARDS ───────────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color .15s;
+}
+.summary-card:hover { border-color: var(--border2); }
+
+.summary-card.red    { border-left: 3px solid var(--red); }
+.summary-card.yellow { border-left: 3px solid var(--yellow); }
+.summary-card.green  { border-left: 3px solid var(--green); }
+.summary-card.blue   { border-left: 3px solid var(--accent); }
+
+.summary-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+
+.summary-value {
+  font-family: var(--mono);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1;
+}
+.summary-card.red    .summary-value { color: var(--red); }
+.summary-card.yellow .summary-value { color: var(--yellow); }
+.summary-card.green  .summary-value { color: var(--green); }
+.summary-card.blue   .summary-value { color: var(--accent); }
+
+.summary-sub {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+/* ── DATA QUALITY ────────────────────────────────────── */
+.quality-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.quality-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  flex-shrink: 0;
+}
+
+.quality-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.quality-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.quality-dot.ok       { background: var(--green); }
+.quality-dot.unlinked { background: var(--yellow); }
+.quality-dot.error    { background: var(--red); }
+.quality-dot.pending  { background: var(--accent); }
+
+.quality-val {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.quality-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+/* ── SHIFTS TABLE ────────────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.section-count {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text3);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  padding: 2px 8px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.filter-tab {
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: all .15s;
+}
+.filter-tab.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+.shifts-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.shifts-table th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.shifts-table td {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border2);
+  vertical-align: middle;
+}
+
+.shifts-table tr:last-child td { border-bottom: none; }
+
+.shifts-table tbody tr {
+  cursor: pointer;
+  transition: background .12s;
+}
+.shifts-table tbody tr:hover { background: var(--surface2); }
+.shifts-table tbody tr.active-row { background: var(--accent-dim); }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-badge.shortage { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(248,81,73,.3); }
+.status-badge.check    { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); }
+.status-badge.ok       { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(63,185,80,.3); }
+.status-badge.active   { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(56,139,253,.3); }
+.status-badge.draft    { background: var(--surface3);   color: var(--text3);  border: 1px solid var(--border); }
+
+.deviation-val {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+.deviation-val.neg { color: var(--red); }
+.deviation-val.pos { color: var(--green); }
+.deviation-val.zero { color: var(--text3); }
+
+.driver-cell { font-weight: 600; }
+.car-cell    { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+.date-cell   { font-family: var(--mono); font-size: 12px; color: var(--text2); white-space: nowrap; }
+.no-data     { color: var(--text3); font-style: italic; }
+
+.empty-table {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text2);
+}
+.empty-table-icon  { font-size: 36px; display: block; margin-bottom: 12px; }
+.empty-table-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.empty-table-sub   { font-size: 13px; color: var(--text3); }
+
+/* ── DETAIL PANEL ────────────────────────────────────── */
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border2);
+}
+
+.detail-close {
+  padding: 6px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text3);
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: color .15s, border-color .15s;
+}
+.detail-close:hover { color: var(--text); border-color: var(--border); }
+
+.detail-driver { font-size: 18px; font-weight: 700; line-height: 1.2; margin-bottom: 3px; }
+.detail-car    { font-size: 13px; color: var(--text2); font-family: var(--mono); }
+
+.detail-formula {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.formula-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  margin-bottom: 10px;
+}
+
+.formula-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border2);
+}
+.formula-row:last-child { border-bottom: none; }
+.formula-row.total {
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 8px;
+  font-weight: 700;
+}
+
+.formula-label { color: var(--text2); }
+.formula-label .sign { color: var(--text3); margin-right: 4px; font-family: var(--mono); }
+.formula-val {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.formula-val.plus  { color: var(--green); }
+.formula-val.minus { color: var(--red); }
+.formula-val.total-pos { color: var(--red); font-size: 16px; }
+.formula-val.total-neg { color: var(--green); font-size: 16px; }
+.formula-val.total-zero { color: var(--text3); font-size: 16px; }
+
+.detail-section { margin-bottom: 16px; }
+
+.detail-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detail-section-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  background: var(--surface3);
+  border-radius: 100px;
+  padding: 1px 7px;
+}
+
+.mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.mini-table th {
+  background: var(--surface3);
+  padding: 7px 10px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  border-bottom: 1px solid var(--border2);
+  white-space: nowrap;
+}
+
+.mini-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.mini-table tr:last-child td { border-bottom: none; }
+.mini-table tbody tr:hover { background: var(--surface3); }
+
+.detail-comment {
+  background: var(--surface2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.detail-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.meta-item {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.meta-item-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 4px;
+}
+
+.meta-item-val {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.detail-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  color: var(--text3);
+  font-size: 13px;
+}
+
+.trf-dir-in  { color: var(--green); }
+.trf-dir-out { color: var(--red); }
+
+.flag-ok       { color: var(--green); }
+.flag-unlinked { color: var(--yellow); }
+.flag-error    { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Загрузка данных…</div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="topbar-logo-dot"></div>
+    FUELSHIFT
+  </div>
+  <div class="topbar-title">Дашборд руководителя</div>
+  <div class="topbar-updated" id="updated-at" style="display:none">
+    <div class="topbar-updated-dot"></div>
+    <span id="updated-text"></span>
+  </div>
+  <button class="btn-refresh" id="btn-refresh" onclick="loadDashboard()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+    </svg>
+    Обновить
+  </button>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- MAIN -->
+  <div class="main" id="main-area">
+
+    <!-- ERROR -->
+    <div id="error-state">
+      <div class="error-icon">⚠️</div>
+      <div class="error-title">Не удалось загрузить данные</div>
+      <div class="error-sub" id="error-text">Проверьте API_URL и убедитесь, что Apps Script опубликован.</div>
+      <button class="btn-retry" onclick="loadDashboard()">Попробовать снова</button>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content" style="display:none">
+
+      <!-- SUMMARY -->
+      <div class="summary-grid">
+        <div class="summary-card red fu">
+          <div class="summary-label">Недостача</div>
+          <div class="summary-value" id="cnt-shortage">—</div>
+          <div class="summary-sub">вахт требуют внимания</div>
+        </div>
+        <div class="summary-card yellow fu1">
+          <div class="summary-label">Проверить</div>
+          <div class="summary-value" id="cnt-check">—</div>
+          <div class="summary-sub">неполные данные</div>
+        </div>
+        <div class="summary-card green fu2">
+          <div class="summary-label">Норма</div>
+          <div class="summary-value" id="cnt-ok">—</div>
+          <div class="summary-sub">вахт в допуске</div>
+        </div>
+        <div class="summary-card blue fu3">
+          <div class="summary-label">Активные</div>
+          <div class="summary-value" id="cnt-active">—</div>
+          <div class="summary-sub">вахт сейчас</div>
+        </div>
+      </div>
+
+      <!-- QUALITY -->
+      <div class="quality-bar fu4">
+        <div class="quality-label">Данные</div>
+        <div class="quality-item">
+          <div class="quality-dot ok"></div>
+          <span>Мониторинг:</span>
+          <span class="quality-val" id="q-mon-ok">—</span>
+          <span style="color:var(--text3)">строк привязано</span>
+        </div>
+        <div class="quality-item" id="q-mon-warn-wrap">
+          <div class="quality-dot unlinked"></div>
+          <span class="quality-val" id="q-mon-unlinked">—</span>
+          <span>не привязано</span>
+        </div>
+        <div class="quality-sep"></div>
+        <div class="quality-item">
+          <div class="quality-dot ok"></div>
+          <span>Карты:</span>
+          <span class="quality-val" id="q-card-ok">—</span>
+          <span style="color:var(--text3)">строк привязано</span>
+        </div>
+        <div class="quality-item" id="q-card-warn-wrap">
+          <div class="quality-dot unlinked"></div>
+          <span class="quality-val" id="q-card-unlinked">—</span>
+          <span>не привязано</span>
+        </div>
+        <div class="quality-sep"></div>
+        <div class="quality-item">
+          <div class="quality-dot pending"></div>
+          <span>Переливов ждут подтверждения:</span>
+          <span class="quality-val" id="q-trf-pending">—</span>
+        </div>
+      </div>
+
+      <!-- SHIFTS TABLE -->
+      <div class="section-header fu5">
+        <div class="section-title">Вахты</div>
+        <div class="section-count" id="shifts-count">0</div>
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="setFilter('all', this)">Все</button>
+          <button class="filter-tab" onclick="setFilter('shortage', this)">Недостача</button>
+          <button class="filter-tab" onclick="setFilter('check', this)">Проверить</button>
+          <button class="filter-tab" onclick="setFilter('active', this)">Активные</button>
+        </div>
+      </div>
+
+      <table class="shifts-table" id="shifts-table">
+        <thead>
+          <tr>
+            <th>Водитель</th>
+            <th>Автомобиль</th>
+            <th>Период</th>
+            <th>Статус</th>
+            <th>Отклонение, л</th>
+            <th>Заправлено, л</th>
+          </tr>
+        </thead>
+        <tbody id="shifts-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-inner" id="detail-inner">
+      <div class="detail-spinner">
+        <div class="spinner"></div>
+        Загрузка вахты…
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ▼▼▼ ВСТАВЬТЕ URL ВАШЕГО APPS SCRIPT ▼▼▼
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwzpMLD-ehBtfD24RKxwLM21yqOrAPc-VvJaiioM6jXGVgHJklRoVlVlrKtJRgeYaXr/exec';
+  // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+  let allShifts    = [];
+  let activeFilter = 'all';
+  let activeShiftId = null;
+
+  // ── LOAD DASHBOARD ───────────────────────────────────────
+  async function loadDashboard() {
+    const btn = document.getElementById('btn-refresh');
+    btn.classList.add('loading');
+
+    try {
+      const res  = await fetch(API_URL + '?action=getDashboard');
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+
+      document.getElementById('loading-overlay').style.display = 'none';
+      document.getElementById('error-state').classList.remove('show');
+      document.getElementById('content').style.display = 'block';
+
+      renderSummary(data.counters);
+      renderQuality(data.quality);
+      allShifts = data.shifts;
+      renderShifts(allShifts);
+
+      document.getElementById('updated-at').style.display = 'flex';
+      document.getElementById('updated-text').textContent = data.updatedAt;
+
+    } catch (e) {
+      document.getElementById('loading-overlay').style.display = 'none';
+      document.getElementById('error-state').classList.add('show');
+      document.getElementById('error-text').textContent = e.message || 'Неизвестная ошибка';
+    } finally {
+      btn.classList.remove('loading');
+    }
+  }
+
+  // ── SUMMARY ──────────────────────────────────────────────
+  function renderSummary(c) {
+    document.getElementById('cnt-shortage').textContent = c.shortage;
+    document.getElementById('cnt-check').textContent    = c.check;
+    document.getElementById('cnt-ok').textContent       = c.ok;
+    document.getElementById('cnt-active').textContent   = c.active;
+  }
+
+  // ── QUALITY ──────────────────────────────────────────────
+  function renderQuality(q) {
+    document.getElementById('q-mon-ok').textContent       = q.monitoring.ok;
+    document.getElementById('q-mon-unlinked').textContent = q.monitoring.unlinked;
+    document.getElementById('q-card-ok').textContent      = q.cards.ok;
+    document.getElementById('q-card-unlinked').textContent = q.cards.unlinked;
+    document.getElementById('q-trf-pending').textContent  = q.transfers.pending;
+
+    // Подсвечиваем предупреждения
+    const monWarn  = document.getElementById('q-mon-warn-wrap');
+    const cardWarn = document.getElementById('q-card-warn-wrap');
+    monWarn.style.color  = q.monitoring.unlinked > 0 ? 'var(--yellow)' : 'var(--text2)';
+    cardWarn.style.color = q.cards.unlinked > 0      ? 'var(--yellow)' : 'var(--text2)';
+  }
+
+  // ── SHIFTS TABLE ─────────────────────────────────────────
+  function setFilter(filter, el) {
+    activeFilter = filter;
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+
+    const filtered = filter === 'all' ? allShifts : allShifts.filter(s => {
+      if (filter === 'shortage') return s.status === 'Недостача';
+      if (filter === 'check')    return s.status === 'Требует проверки';
+      if (filter === 'active')   return !s.dateEnd || s.status === 'Активна';
+      return true;
+    });
+    renderShifts(filtered);
+  }
+
+  function renderShifts(shifts) {
+    const tbody = document.getElementById('shifts-tbody');
+    document.getElementById('shifts-count').textContent = shifts.length;
+
+    if (!shifts.length) {
+      tbody.innerHTML = `
+        <tr><td colspan="6">
+          <div class="empty-table">
+            <span class="empty-table-icon">📋</span>
+            <div class="empty-table-title">Вахт нет</div>
+            <div class="empty-table-sub">Попробуйте другой фильтр или добавьте вахты в таблицу</div>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = shifts.map((s, idx) => {
+      const statusBadge = statusBadgeHtml(s.status);
+      const dev = s.deviation;
+      let devHtml = '<span class="no-data">—</span>';
+      if (dev !== null && dev !== undefined) {
+        const cls = dev > 0.5 ? 'neg' : dev < -0.5 ? 'pos' : 'zero';
+        const sign = dev > 0 ? '+' : '';
+        devHtml = `<span class="deviation-val ${cls}">${sign}${dev.toFixed(1)}</span>`;
+      }
+
+      const cards = s.cardsTotal !== null ? s.cardsTotal.toFixed(0) + ' л' : '<span class="no-data">—</span>';
+      const period = s.dateEnd ? `${s.dateStart} — ${s.dateEnd}` : `с ${s.dateStart}`;
+
+      return `<tr onclick="openDetail('${s.id}')" id="row-${s.id.replace(/\s/g,'_')}"
+                  class="${activeShiftId === s.id ? 'active-row' : ''}"
+                  style="animation: fadeUp .2s ${idx * 0.03}s ease both;">
+        <td class="driver-cell">${s.driverName}</td>
+        <td class="car-cell">${s.carDisplay}</td>
+        <td class="date-cell">${period}</td>
+        <td>${statusBadge}</td>
+        <td>${devHtml}</td>
+        <td style="font-family:var(--mono);font-size:12px">${cards}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function statusBadgeHtml(status) {
+    const map = {
+      'Недостача':         ['shortage', '⚠ Недостача'],
+      'Требует проверки':  ['check',    '? Проверить'],
+      'Норма':             ['ok',       '✓ Норма'],
+      'Активна':           ['active',   '● Активна'],
+      'Закрыта':           ['draft',    '— Закрыта'],
+    };
+    const [cls, label] = map[status] || ['draft', status || '—'];
+    return `<span class="status-badge ${cls}">${label}</span>`;
+  }
+
+  // ── DETAIL PANEL ─────────────────────────────────────────
+  async function openDetail(shiftId) {
+    // Highlight row
+    document.querySelectorAll('.shifts-table tbody tr').forEach(r => r.classList.remove('active-row'));
+    const rowId = 'row-' + shiftId.replace(/\s/g, '_');
+    document.getElementById(rowId)?.classList.add('active-row');
+    activeShiftId = shiftId;
+
+    const panel = document.getElementById('detail-panel');
+    const inner = document.getElementById('detail-inner');
+    panel.classList.add('open');
+
+    inner.innerHTML = `<div class="detail-spinner"><div class="spinner"></div>Загрузка вахты…</div>`;
+
+    try {
+      const res  = await fetch(`${API_URL}?action=getShiftDetail&shiftId=${encodeURIComponent(shiftId)}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      renderDetail(data);
+    } catch (e) {
+      inner.innerHTML = `
+        <div style="text-align:center;padding:48px 20px;color:var(--text2)">
+          <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+          <div style="font-weight:600;margin-bottom:6px">Ошибка загрузки</div>
+          <div style="font-size:13px;color:var(--text3)">${e.message}</div>
+        </div>`;
+    }
+  }
+
+  function closeDetail() {
+    document.getElementById('detail-panel').classList.remove('open');
+    document.querySelectorAll('.shifts-table tbody tr').forEach(r => r.classList.remove('active-row'));
+    activeShiftId = null;
+  }
+
+  function renderDetail(data) {
+    const { shift, result, monitoring, cards, transfers } = data;
+
+    const dev    = result.deviation;
+    const devCls = dev === null ? '' : dev > 0.5 ? 'total-pos' : dev < -0.5 ? 'total-neg' : 'total-zero';
+    const devStr = dev !== null ? (dev > 0 ? '+' : '') + dev.toFixed(2) + ' л' : '—';
+
+    const fuelStart  = shift.fuelStart  !== null ? shift.fuelStart  + ' л' : '—';
+    const fuelEnd    = shift.fuelEnd    !== null ? shift.fuelEnd    + ' л' : '—';
+    const odoStart   = shift.odoStart   !== null ? shift.odoStart   + ' км' : '—';
+    const odoEnd     = shift.odoEnd     !== null ? shift.odoEnd     + ' км' : '—';
+
+    const n = v => v !== null && v !== undefined ? v.toFixed(1) + ' л' : '—';
+
+    // Monitoring table rows
+    const monRows = monitoring.length ? monitoring.map(r => {
+      const flagCls = r.flag === 'ОК' ? 'flag-ok' : r.flag === 'Не привязано' ? 'flag-unlinked' : 'flag-error';
+      return `<tr>
+        <td>${r.date}</td>
+        <td>${r.fuelStart !== null ? r.fuelStart.toFixed(0) : '—'}</td>
+        <td>${r.fuelEnd   !== null ? r.fuelEnd.toFixed(0)   : '—'}</td>
+        <td>${r.spend     !== null ? r.spend.toFixed(1)     : '—'}</td>
+        <td class="${flagCls}">${r.flag}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:16px">Нет данных</td></tr>`;
+
+    // Cards table rows
+    const cardRows = cards.length ? cards.map(r => `<tr>
+        <td>${r.datetime}</td>
+        <td>${r.cardNum}</td>
+        <td>${r.liters !== null ? r.liters.toFixed(1) : '—'}</td>
+        <td class="${r.status === 'ОК' ? 'flag-ok' : 'flag-unlinked'}">${r.status}</td>
+      </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px">Нет данных</td></tr>`;
+
+    // Transfers
+    const trfRows = transfers.length ? transfers.map(r => {
+      const dirCls   = r.direction === 'in' ? 'trf-dir-in' : 'trf-dir-out';
+      const dirLabel = r.direction === 'in' ? '↓ вх' : '↑ исх';
+      const litFinal = r.litersFinal !== null ? r.litersFinal.toFixed(1) : '—';
+      return `<tr>
+        <td>${r.date}</td>
+        <td class="${dirCls}" style="font-weight:700">${dirLabel}</td>
+        <td>${r.direction === 'in' ? r.senderName : r.receiverName}</td>
+        <td>${litFinal}</td>
+        <td>${r.status}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:16px">Переливов нет</td></tr>`;
+
+    document.getElementById('detail-inner').innerHTML = `
+      <div class="slide">
+        <!-- HEADER -->
+        <div class="detail-header">
+          <div>
+            <div class="detail-driver">${shift.driverName}</div>
+            <div class="detail-car">${shift.carDisplay}</div>
+          </div>
+          <button class="detail-close" onclick="closeDetail()">✕</button>
+        </div>
+
+        <!-- META -->
+        <div class="detail-meta-grid">
+          <div class="meta-item">
+            <div class="meta-item-label">Период</div>
+            <div class="meta-item-val" style="font-size:12px">${shift.dateStart} — ${shift.dateEnd || 'активна'}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-item-label">Топл. карта</div>
+            <div class="meta-item-val" style="font-size:12px">${shift.cardNum || '—'}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-item-label">Пробег начало</div>
+            <div class="meta-item-val">${odoStart}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-item-label">Пробег конец</div>
+            <div class="meta-item-val">${odoEnd}</div>
+          </div>
+        </div>
+
+        <!-- FORMULA -->
+        <div class="detail-formula">
+          <div class="formula-title">Расчёт баланса топлива</div>
+          <div class="formula-row">
+            <span class="formula-label"><span class="sign"> </span>Топливо начало вахты</span>
+            <span class="formula-val">${fuelStart}</span>
+          </div>
+          <div class="formula-row">
+            <span class="formula-label"><span class="sign">+</span>Заправки по картам</span>
+            <span class="formula-val plus">${n(result.cardsTotal)}</span>
+          </div>
+          <div class="formula-row">
+            <span class="formula-label"><span class="sign">+</span>Входящие переливы</span>
+            <span class="formula-val plus">${n(result.inTransfer)}</span>
+          </div>
+          <div class="formula-row">
+            <span class="formula-label"><span class="sign">−</span>Исходящие переливы</span>
+            <span class="formula-val minus">${n(result.outTransfer)}</span>
+          </div>
+          <div class="formula-row">
+            <span class="formula-label"><span class="sign">−</span>Расход по мониторингу</span>
+            <span class="formula-val minus">${n(result.monSpend)}</span>
+          </div>
+          <div class="formula-row">
+            <span class="formula-label"><span class="sign">−</span>Топливо конец вахты</span>
+            <span class="formula-val minus">${fuelEnd}</span>
+          </div>
+          <div class="formula-row total">
+            <span class="formula-label">Необъяснимое отклонение</span>
+            <span class="formula-val ${devCls}">${devStr}</span>
+          </div>
+        </div>
+
+        ${result.comment ? `
+        <div class="detail-section">
+          <div class="detail-section-title">Комментарий системы</div>
+          <div class="detail-comment">${result.comment}</div>
+        </div>` : ''}
+
+        <!-- MONITORING -->
+        <div class="detail-section">
+          <div class="detail-section-title">
+            Мониторинг по дням
+            <span class="detail-section-count">${monitoring.length} дн.</span>
+          </div>
+          <table class="mini-table">
+            <thead><tr><th>Дата</th><th>Нач. л</th><th>Кон. л</th><th>Расход л</th><th>Флаг</th></tr></thead>
+            <tbody>${monRows}</tbody>
+          </table>
+        </div>
+
+        <!-- CARDS -->
+        <div class="detail-section">
+          <div class="detail-section-title">
+            Заправки по картам
+            <span class="detail-section-count">${cards.length} зап.</span>
+          </div>
+          <table class="mini-table">
+            <thead><tr><th>Дата/Время</th><th>Карта</th><th>Литры</th><th>Статус</th></tr></thead>
+            <tbody>${cardRows}</tbody>
+          </table>
+        </div>
+
+        <!-- TRANSFERS -->
+        <div class="detail-section">
+          <div class="detail-section-title">
+            Переливы
+            <span class="detail-section-count">${transfers.length}</span>
+          </div>
+          <table class="mini-table">
+            <thead><tr><th>Дата</th><th>Напр.</th><th>Контрагент</th><th>Литры</th><th>Статус</th></tr></thead>
+            <tbody>${trfRows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  // ── START ─────────────────────────────────────────────────
+  loadDashboard();
+</script>
+</body>
+</html>
