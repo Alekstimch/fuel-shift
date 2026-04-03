@@ -14,6 +14,7 @@
       --surface:    #161b22;
       --surface2:   #1c2128;
       --border:     #30363d;
+      --border2:    #21262d;
       --accent:     #388bfd;
       --accent-dim: rgba(56,139,253,.14);
       --green:      #3fb950;
@@ -28,6 +29,7 @@
       --mono:       'IBM Plex Mono', monospace;
       --sans:       'IBM Plex Sans', sans-serif;
       --radius:     10px;
+      --radius-sm:  6px;
     }
 
 ```
@@ -38,71 +40,125 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  padding-bottom: 56px;
   overflow-x: hidden;
 }
 
-@keyframes fadeUp  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+/* ── ФИКС КЛАВИАТУРЫ ─────────────────────────────── */
+#screen-create {
+  padding-bottom: 84px;
+}
+.create-submit-wrap {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, transparent, var(--bg) 30%);
+  z-index: 50;
+  will-change: transform;
+  transition: transform .1s ease;
+}
+.create-submit-wrap.hidden { display: none; }
+
+/* ── АНИМАЦИИ ─────────────────────────────────── */
+@keyframes fadeUp  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
 @keyframes pulse   { 0%,100% { opacity:1; } 50% { opacity:.3; } }
 @keyframes spin    { to { transform:rotate(360deg); } }
+@keyframes scaleIn { from { opacity:0; transform:scale(.88); } to { opacity:1; transform:scale(1); } }
 
-/* ── AUTH SCREEN ───────────────────────────────────── */
+.fu  { animation: fadeUp .28s ease both; }
+.fu1 { animation: fadeUp .28s .06s ease both; }
+.fu2 { animation: fadeUp .28s .12s ease both; }
+.fu3 { animation: fadeUp .28s .18s ease both; }
+.fu4 { animation: fadeUp .28s .24s ease both; }
+
+/* ── AUTH ─────────────────────────────────────── */
 #auth-screen {
   display: flex;
   flex-direction: column;
   justify-content: center;
   min-height: 100vh;
   padding: 40px 24px;
-  animation: fadeUp .35s ease;
 }
-.auth-logo {
+
+.auth-wordmark {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 3px;
-  color: var(--accent);
+  color: var(--text3);
   text-transform: uppercase;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  animation: fadeUp .3s ease both;
 }
-.auth-title {
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.1;
-  margin-bottom: 8px;
-}
-.auth-sub {
-  font-size: 14px;
-  color: var(--text2);
-  margin-bottom: 40px;
-  line-height: 1.5;
-}
-.auth-spinner {
+
+.auth-logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
-  color: var(--text3);
+  margin-bottom: 24px;
 }
-.spinner-ring {
-  width: 16px; height: 16px;
+.auth-logo .auth-wordmark { margin-bottom: 0; }
+.auth-logo-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.auth-title {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  animation: fadeUp .3s .06s ease both;
+}
+.auth-title span { color: var(--accent); }
+
+.auth-sub {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 40px;
+  animation: fadeUp .3s .12s ease both;
+}
+
+.auth-loader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeUp .3s .18s ease both;
+}
+
+.spinner {
+  width: 18px; height: 18px;
   border: 2px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin .8s linear infinite;
   flex-shrink: 0;
 }
+
+.auth-loader-text {
+  font-size: 13px;
+  color: var(--text2);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
 .auth-error {
   display: none;
-  margin-top: 16px;
-  padding: 14px 16px;
   background: var(--red-dim);
-  border: 1px solid rgba(248,81,73,.25);
+  border: 1px solid rgba(248,81,73,.3);
   border-radius: var(--radius);
+  padding: 16px;
   font-size: 14px;
-  color: #ffa8a8;
-  line-height: 1.5;
+  color: #ffa8a3;
+  line-height: 1.6;
+  animation: fadeUp .2s ease both;
 }
-.pulse { animation: pulse 1.4s ease infinite; }
 
-/* ── STATUS SCREEN ─────────────────────────────────── */
+/* ── STATUS SCREEN ────────────────────────────── */
 #status-screen {
   display: none;
   flex-direction: column;
@@ -111,284 +167,369 @@ body {
   min-height: 100vh;
   padding: 32px 24px;
   text-align: center;
-  gap: 12px;
 }
-.status-icon { font-size: 64px; line-height: 1; margin-bottom: 4px; }
-.status-title { font-size: 24px; font-weight: 700; }
-.status-sub { font-size: 14px; color: var(--text2); max-width: 260px; line-height: 1.6; white-space: pre-line; }
+
+.status-icon {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 20px;
+  animation: scaleIn .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+.status-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  animation: fadeUp .25s .08s ease both;
+}
+
+.status-sub {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.7;
+  max-width: 260px;
+  margin-bottom: 8px;
+  white-space: pre-line;
+  animation: fadeUp .25s .14s ease both;
+}
+
+.status-notify {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(56,139,253,.25);
+  border-radius: 100px;
+  padding: 7px 14px;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 4px;
+  margin-bottom: 20px;
+  animation: fadeUp .25s .20s ease both;
+}
+.status-notify.show { display: flex; }
+
 .status-error-detail {
   display: none;
-  font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--red);
   background: var(--red-dim);
   border: 1px solid rgba(248,81,73,.2);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   max-width: 280px;
   word-break: break-word;
   text-align: left;
   line-height: 1.5;
+  margin-bottom: 20px;
+  animation: fadeUp .2s ease both;
 }
-#status-back-btn {
-  margin-top: 8px;
-  padding: 12px 32px;
-  background: transparent;
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 24px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
+  background: transparent;
   color: var(--text2);
-  font-family: var(--sans);
   font-size: 14px;
   font-weight: 600;
+  font-family: var(--sans);
   cursor: pointer;
+  transition: border-color .15s, color .15s;
+  animation: fadeUp .25s .26s ease both;
 }
+.btn-back:hover { border-color: var(--accent); color: var(--accent); }
 
-/* ── MAIN SCREEN ───────────────────────────────────── */
+/* ── MAIN ─────────────────────────────────────── */
 #main-screen { display: none; }
 
-.top-bar {
+.app-header {
+  padding: 16px 16px 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px 0;
+  gap: 10px;
+  margin-bottom: 16px;
 }
-.app-logo {
+
+.app-wordmark {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 2px;
   color: var(--text3);
   text-transform: uppercase;
+  flex: 1;
 }
-.user-badge {
+
+.driver-pill {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border2);
   border-radius: 100px;
   padding: 5px 12px 5px 8px;
   font-size: 13px;
+  color: var(--text2);
   font-weight: 500;
-  color: var(--text);
+  max-width: 200px;
+  overflow: hidden;
 }
-.user-dot {
-  width: 8px; height: 8px;
+
+.driver-dot {
+  width: 7px; height: 7px;
   background: var(--green);
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-/* ── TABS ──────────────────────────────────────────── */
-.tabs {
-  display: flex;
-  gap: 4px;
-  padding: 12px 16px 0;
+.driver-pill-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* ── TABS ─────────────────────────────────────── */
+/* ФИКС: три колонки вместо двух */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
 .tab-btn {
-  flex: 1;
+  padding: 12px 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 9px 4px;
-  border-radius: 8px;
-  border: 1.5px solid var(--border);
-  background: transparent;
-  color: var(--text2);
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .18s;
+  gap: 4px;
   white-space: nowrap;
-  min-width: 0;
-  position: relative;
 }
-.tab-btn.active {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-dim);
-}
-/* Бейдж с количеством ожидающих */
+
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
 .tab-badge {
-  display: none;
-  background: var(--red);
+  background: var(--accent);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
   border-radius: 100px;
-  padding: 1px 5px;
-  min-width: 16px;
+  padding: 1px 6px;
+  min-width: 18px;
   text-align: center;
-  line-height: 14px;
+  display: none;
 }
 .tab-badge.show { display: inline-block; }
 
-/* ── SCREEN CONTAINER ──────────────────────────────── */
-.screen { display: none; padding: 12px 16px 100px; }
-.screen.active { display: block; animation: fadeUp .22s ease; }
+/* ── SCREENS ──────────────────────────────────── */
+.screen { display: none; padding: 0 16px; }
+.screen.active { display: block; }
 
-/* ── FORM ──────────────────────────────────────────── */
-.form-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-}
+/* ── FORM ─────────────────────────────────────── */
+.form-section { margin-bottom: 20px; }
+
 .field-label {
+  display: block;
   font-size: 11px;
   font-weight: 700;
+  color: var(--text3);
   text-transform: uppercase;
-  letter-spacing: .7px;
-  color: var(--text2);
-  margin-bottom: 6px;
-  display: block;
+  letter-spacing: .8px;
+  margin-bottom: 8px;
 }
+
 select, input[type="number"], input[type="date"] {
   width: 100%;
-  padding: 12px 14px;
-  background: var(--surface2);
+  padding: 13px 14px;
+  background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   color: var(--text);
-  font-size: 16px; /* 16px — iOS не зумирует */
+  /* ФИКС: 16px — iOS не зумирует страницу при фокусе */
+  font-size: 16px;
   font-family: var(--sans);
-  margin-bottom: 4px;
   -webkit-appearance: none;
-  appearance: none;
+  transition: border-color .15s;
 }
-input[type="number"] { font-family: var(--mono); font-weight: 600; }
 select:focus, input:focus { outline: none; border-color: var(--accent); }
-select option { background: var(--surface2); }
-.field-hint {
-  font-size: 11px;
-  color: var(--text3);
-  margin-bottom: 14px;
+select option { background: #161b22; }
+
+input[type="number"] {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 600;
 }
 
-/* Превью выбранного получателя */
-.receiver-preview {
+.field-hint {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 6px;
+  padding-left: 2px;
+}
+
+.car-hint {
   display: none;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--accent-dim);
-  border: 1px solid rgba(56,139,253,.25);
-  border-radius: 8px;
-  margin-bottom: 14px;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 7px;
+  padding-left: 2px;
 }
-.receiver-preview.show { display: flex; }
-.receiver-preview-name { font-size: 14px; font-weight: 600; }
-.receiver-preview-car  { font-size: 12px; color: var(--text2); }
+.car-hint.show { display: flex; }
 
-/* Фиксированная кнопка отправки */
-.submit-wrap {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  padding: 12px 16px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  background: linear-gradient(to bottom, transparent, var(--bg) 35%);
-  z-index: 50;
-  will-change: transform;
-  transition: transform .1s ease;
-}
-.submit-wrap.hidden { display: none; }
-
-.btn {
+.btn-primary {
   width: 100%;
-  padding: 14px;
-  border-radius: var(--radius);
+  padding: 15px;
+  background: var(--accent);
   border: none;
-  font-family: var(--sans);
+  border-radius: var(--radius);
+  color: #fff;
   font-size: 15px;
   font-weight: 700;
+  font-family: var(--sans);
   cursor: pointer;
-  transition: opacity .15s, transform .08s;
+  transition: opacity .15s, transform .1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
-.btn:active { opacity: .8; transform: scale(.98); }
-.btn:disabled { opacity: .45; cursor: not-allowed; }
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-success { background: var(--green); color: #0d1117; }
-.btn-danger  { background: var(--red); color: #fff; }
-.btn-warn    { background: var(--yellow); color: #0d1117; }
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--border);
-  color: var(--text2);
-  font-size: 13px;
-  padding: 10px;
-}
+.btn-primary:active { opacity: .85; transform: scale(.98); }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; }
 
-/* ── TRANSFER CARDS ────────────────────────────────── */
+/* ── TRANSFER CARDS ───────────────────────────── */
+#confirm-list { display: flex; flex-direction: column; gap: 10px; }
+
 .trf-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  margin-bottom: 10px;
   overflow: hidden;
   animation: fadeUp .22s ease both;
 }
-.trf-card.closed { opacity: .65; border-style: dashed; }
+.trf-card.closed { opacity: .6; border-style: dashed; }
 
 .trf-head {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--border2);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  padding: 14px 14px 0;
 }
+
 .trf-avatar {
-  width: 42px; height: 42px;
+  width: 40px; height: 40px;
   border-radius: 50%;
-  border: 1.5px solid rgba(56,139,253,.35);
   background: var(--accent-dim);
-  color: var(--accent);
-  font-family: var(--mono);
-  font-weight: 600;
-  font-size: 14px;
+  border: 1.5px solid rgba(56,139,253,.3);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--sans);
+  color: var(--accent);
   flex-shrink: 0;
 }
-.trf-avatar.out {
-  background: var(--green-dim);
-  border-color: rgba(63,185,80,.3);
-  color: var(--green);
-}
-.trf-sender-name { font-size: 15px; font-weight: 600; margin-bottom: 1px; }
+
+.trf-sender-name { font-size: 16px; font-weight: 700; line-height: 1.2; margin-bottom: 3px; }
 .trf-sender-car  { font-size: 12px; color: var(--text2); }
-.trf-amount-block { text-align: right; flex-shrink: 0; }
+
+.trf-amount-block { margin-left: auto; text-align: right; flex-shrink: 0; }
 .trf-liters {
   font-family: var(--mono);
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 600;
   color: var(--accent);
   line-height: 1;
 }
-.trf-liters-unit { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.trf-liters-unit { font-family: var(--mono); font-size: 12px; color: var(--text2); margin-top: 2px; }
 
 .trf-meta {
-  display: flex;
-  gap: 12px;
-  padding: 8px 14px 12px;
-  font-size: 12px;
+  padding: 9px 14px;
+  font-size: 11px;
   color: var(--text3);
-  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  gap: 14px;
 }
 
-/* Кнопки действий */
 .trf-actions { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-.trf-action-row { display: flex; gap: 8px; }
-.trf-action-row .btn { flex: 1; padding: 11px; font-size: 13px; }
-.trf-adjust-row { display: flex; gap: 8px; align-items: stretch; }
-.trf-adjust-row input {
-  flex: 1; margin: 0; padding: 11px 12px;
-  font-size: 15px; font-family: var(--mono); font-weight: 600;
-}
-.trf-adjust-row .btn { flex: none; width: auto; padding: 11px 16px; font-size: 13px; }
-.trf-adjust-hint { font-size: 11px; color: var(--text3); }
 
-/* Статус закрытой карточки */
+.trf-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.btn-confirm, .btn-reject-trigger, .btn-adjust-toggle, .btn-adjust-save,
+.btn-reject-yes, .btn-reject-no {
+  padding: 11px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--sans);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: opacity .15s, transform .1s;
+}
+.btn-confirm:active, .btn-reject-trigger:active,
+.btn-adjust-toggle:active, .btn-adjust-save:active { opacity: .8; transform: scale(.97); }
+button:disabled { opacity: .4 !important; cursor: not-allowed !important; }
+
+.btn-confirm        { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+.btn-reject-trigger { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-adjust-toggle  { background: transparent; color: var(--text3); border: 1px solid var(--border2); font-size: 12px; }
+.btn-adjust-save    { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); flex-shrink: 0; padding: 11px 14px; }
+
+.reject-confirm {
+  display: none;
+  background: var(--red-dim);
+  border: 1px solid rgba(248,81,73,.25);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn .2s ease both;
+}
+.reject-confirm.show { display: flex; }
+.reject-confirm-text { font-size: 13px; color: #ffa8a3; font-weight: 500; line-height: 1.4; }
+.reject-confirm-row  { display: flex; gap: 8px; }
+
+.btn-reject-yes { flex: 1; background: var(--red); color: #fff; border: none; }
+.btn-reject-no  { flex: 1; background: transparent; color: var(--text2); border: 1px solid var(--border); font-weight: 600; }
+
+.adjust-row {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn .2s ease both;
+}
+.adjust-row.show { display: flex; }
+.adjust-row input {
+  flex: 1;
+  margin: 0;
+  padding: 11px 12px;
+  font-size: 16px;
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
 .trf-closed-status {
   padding: 12px 14px;
   font-size: 13px;
@@ -397,27 +538,32 @@ select option { background: var(--surface2); }
   align-items: center;
   gap: 7px;
 }
-.trf-closed-status.ok   { color: var(--green); }
-.trf-closed-status.adj  { color: var(--yellow); }
-.trf-closed-status.rej  { color: var(--text2); }
+.trf-closed-status.ok  { color: var(--green); }
+.trf-closed-status.adj { color: var(--yellow); }
+.trf-closed-status.rej { color: var(--text2); }
 .trf-closed-status.wait { color: var(--accent); }
 
-/* ── EMPTY / SPINNER ───────────────────────────────── */
+.trf-avatar.out {
+  background: var(--green-dim);
+  border-color: rgba(63,185,80,.3);
+  color: var(--green);
+}
+
+/* ── EMPTY / SPINNER ──────────────────────────── */
 .empty-state {
   text-align: center;
-  padding: 56px 24px;
-  color: var(--text2);
+  padding: 56px 20px 32px;
 }
-.empty-state-icon  { font-size: 40px; display: block; margin-bottom: 14px; }
-.empty-state-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-.empty-state-sub   { font-size: 13px; line-height: 1.6; }
+.empty-state-icon  { font-size: 40px; display: block; margin-bottom: 14px; opacity: .7; }
+.empty-state-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.empty-state-sub   { font-size: 13px; line-height: 1.65; color: var(--text2); max-width: 240px; margin: 0 auto; }
 
 .list-spinner {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 48px 20px;
+  gap: 12px;
+  padding: 56px 20px;
   color: var(--text3);
   font-size: 13px;
 }
@@ -430,12 +576,14 @@ select option { background: var(--surface2); }
 <!-- AUTH -->
 
 <div id="auth-screen">
-  <div class="auth-logo">FuelShift</div>
-  <div class="auth-title">Переливы<br>топлива</div>
-  <div class="auth-sub">Учёт ведётся по вахтам.</div>
-  <div class="auth-spinner" id="auth-spinner">
-    <div class="spinner-ring pulse"></div>
-    <span>Авторизация…</span>
+  <div class="auth-logo fu">
+    <div class="auth-wordmark">FuelShift</div>
+  </div>
+  <div class="auth-title">Переливы<br><span>топлива</span></div>
+  <div class="auth-sub">Учёт передачи топлива<br>между водителями по вахтам</div>
+  <div class="auth-loader" id="auth-loader">
+    <div class="spinner"></div>
+    <div class="auth-loader-text">Авторизация…</div>
   </div>
   <div class="auth-error" id="auth-error"></div>
 </div>
@@ -443,87 +591,98 @@ select option { background: var(--surface2); }
 <!-- STATUS -->
 
 <div id="status-screen">
-  <div class="status-icon" id="status-icon">✅</div>
+  <div class="status-icon" id="status-icon"></div>
   <div class="status-title" id="status-title"></div>
-  <div class="status-sub" id="status-sub"></div>
+  <div class="status-sub"   id="status-sub"></div>
+  <div class="status-notify" id="status-notify">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 16.92V19a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h2.08a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+    </svg>
+    Водитель получит уведомление в Telegram
+  </div>
   <div class="status-error-detail" id="status-error-detail"></div>
-  <button id="status-back-btn" onclick="hideStatus()">← Назад</button>
+  <button class="btn-back" onclick="hideStatus()">← Назад</button>
 </div>
 
 <!-- MAIN -->
 
 <div id="main-screen">
-  <div class="top-bar">
-    <div class="app-logo">FuelShift</div>
-    <div class="user-badge">
-      <div class="user-dot"></div>
-      <span id="user-name">…</span>
+  <div class="app-header fu">
+    <div class="app-wordmark">FuelShift</div>
+    <div class="driver-pill">
+      <div class="driver-dot"></div>
+      <span class="driver-pill-name" id="driver-name-pill">…</span>
     </div>
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" id="tab-create"  onclick="switchTab('create')">+ Создать</button>
-    <button class="tab-btn"        id="tab-confirm" onclick="switchTab('confirm')">
-      ↓ Входящие <span class="tab-badge" id="badge-confirm"></span>
+    <button class="tab-btn active" onclick="switchTab('create')" id="tab-create">➕ Создать</button>
+    <button class="tab-btn"        onclick="switchTab('confirm')" id="tab-confirm">
+      📥 Входящие
+      <span class="tab-badge" id="pending-badge"></span>
     </button>
-    <button class="tab-btn"        id="tab-outgoing" onclick="switchTab('outgoing')">↑ Мои</button>
+    <button class="tab-btn"        onclick="switchTab('outgoing')" id="tab-outgoing">📤 Мои</button>
   </div>
 
   <!-- CREATE -->
 
   <div class="screen active" id="screen-create">
-    <div class="form-card">
+    <div class="form-section fu1">
       <label class="field-label">Кому переливаете</label>
       <select id="receiver" onchange="onReceiverChange()">
         <option value="">— выберите водителя —</option>
       </select>
-      <div class="receiver-preview" id="receiver-preview">
-        <div>
-          <div class="receiver-preview-name" id="preview-name"></div>
-          <div class="receiver-preview-car"  id="preview-car"></div>
-        </div>
+      <div class="car-hint" id="car-hint">
+        <span>🚛</span>
+        <span id="car-hint-text"></span>
       </div>
+    </div>
 
 ```
+<div class="form-section fu2">
   <label class="field-label">Количество литров</label>
-  <input type="number" id="liters-create" placeholder="80" min="1" max="2000" step="1"
+  <input type="number" id="liters-create" placeholder="0" min="1" max="2000" step="1"
          onfocus="scrollToField(this)">
-  <div class="field-hint">обычно 50–200 л</div>
+  <div class="field-hint">Обычно от 30 до 300 л</div>
+</div>
 
+<div class="form-section fu3">
   <label class="field-label">Дата перелива</label>
-  <input type="date" id="date-create" onfocus="scrollToField(this)">
+  <input type="date" id="date-create">
 </div>
 ```
 
   </div>
 
-  <!-- CONFIRM (INCOMING) -->
+  <!-- Фиксированная кнопка отправки -->
+
+  <div class="create-submit-wrap" id="create-submit-wrap">
+    <button class="btn-primary" id="btn-send" onclick="submitCreate()">
+      <span id="btn-send-text">Отправить заявку</span>
+    </button>
+  </div>
+
+  <!-- CONFIRM -->
 
   <div class="screen" id="screen-confirm">
     <div id="confirm-list">
-      <div class="list-spinner"><div class="spinner-ring"></div>Загрузка…</div>
+      <div class="list-spinner"><div class="spinner"></div>Загрузка…</div>
     </div>
   </div>
 
-  <!-- OUTGOING (МОИ) -->
+  <!-- OUTGOING -->
 
   <div class="screen" id="screen-outgoing">
     <div id="outgoing-list">
-      <div class="list-spinner"><div class="spinner-ring"></div>Загрузка…</div>
+      <div class="list-spinner"><div class="spinner"></div>Загрузка…</div>
     </div>
   </div>
-</div>
-
-<!-- Фиксированная кнопка отправки -->
-
-<div class="submit-wrap" id="submit-wrap">
-  <button class="btn btn-primary" id="btn-send" onclick="submitCreate()">Отправить заявку</button>
 </div>
 
 <script>
   // ▼▼▼ ВСТАВЬТЕ URL ПОСЛЕ ПУБЛИКАЦИИ APPS SCRIPT ▼▼▼
   const API_URL = 'https://script.google.com/macros/s/AKfycbwzpMLD-ehBtfD24RKxwLM21yqOrAPc-VvJaiioM6jXGVgHJklRoVlVlrKtJRgeYaXr/exec';
-  // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+  // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
   const tg = window.Telegram?.WebApp;
   const tgUsername = (tg?.initDataUnsafe?.user?.username || '').toLowerCase();
@@ -531,7 +690,7 @@ select option { background: var(--surface2); }
 
   let currentDriver = null, allDrivers = [], lastTab = 'create';
 
-  // ── INIT ────────────────────────────────────────────────
+  // ── INIT ─────────────────────────────────────────────────
   async function init() {
     document.getElementById('date-create').valueAsDate = new Date();
     try {
@@ -539,7 +698,7 @@ select option { background: var(--surface2); }
       allDrivers = await res.json();
       if (!Array.isArray(allDrivers)) throw new Error('Некорректный ответ сервера');
     } catch (e) {
-      showAuthError('Не удалось подключиться к серверу.<br>Проверьте настройки Apps Script.');
+      showAuthError('Не удалось подключиться к серверу.<br>Попробуйте позже или обратитесь к диспетчеру.');
       logError('init', e.message);
       return;
     }
@@ -551,102 +710,96 @@ select option { background: var(--surface2); }
     }
 
     if (!currentDriver) {
-      showAuthError(tgUsername
-        ? `Ваш @${tgUsername} не найден в таблице.<br>Попросите руководителя добавить вас.`
-        : 'Откройте приложение через бота в Telegram.');
+      showAuthError(
+        tgUsername
+          ? `Ваш Telegram @${tgUsername} не найден в базе.<br>Обратитесь к диспетчеру.`
+          : 'Откройте приложение через бота в Telegram.'
+      );
       return;
     }
 
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('main-screen').style.display = 'block';
-    document.getElementById('user-name').textContent = currentDriver.name;
+    document.getElementById('driver-name-pill').textContent = currentDriver.name;
 
     const sel = document.getElementById('receiver');
     allDrivers.filter(d => d.id !== currentDriver.id).forEach(d => {
       const o = document.createElement('option');
-      o.value = d.id;
-      o.textContent = d.name + (d.car ? ', ' + d.car : '');
+      o.value       = d.id;
+      o.textContent = d.name;
+      o.dataset.car  = d.car  || '';
+      o.dataset.name = d.name || '';
       sel.appendChild(o);
     });
 
-    // Считаем ожидающие входящие → бейдж
-    loadIncomingBadge();
+    loadIncomingCount();
   }
 
-  // ── AUTH ERROR ────────────────────────────────────────────
   function showAuthError(msg) {
-    document.getElementById('auth-spinner').style.display = 'none';
+    document.getElementById('auth-loader').style.display = 'none';
     const el = document.getElementById('auth-error');
     el.innerHTML = msg;
     el.style.display = 'block';
   }
 
-  // ── STATUS SCREEN ─────────────────────────────────────────
-  function showStatus({ ok, title, sub = '', errorDetail = '' }) {
-    document.getElementById('main-screen').style.display  = 'none';
-    document.getElementById('auth-screen').style.display  = 'none';
-    document.getElementById('submit-wrap').classList.add('hidden');
-    const s = document.getElementById('status-screen');
-    s.style.display = 'flex';
-    document.getElementById('status-icon').textContent  = ok ? '✅' : '❌';
-    document.getElementById('status-title').textContent = title;
-    document.getElementById('status-sub').textContent   = sub;
-    const errEl = document.getElementById('status-error-detail');
-    if (!ok && errorDetail) { errEl.textContent = errorDetail; errEl.style.display = 'block'; }
-    else errEl.style.display = 'none';
-  }
+  // ── RECEIVER PREVIEW ─────────────────────────────────────
+  function onReceiverChange() {
+    const sel  = document.getElementById('receiver');
+    const opt  = sel.options[sel.selectedIndex];
+    const hint = document.getElementById('car-hint');
 
-  function hideStatus() {
-    document.getElementById('status-screen').style.display = 'none';
-    document.getElementById('main-screen').style.display   = 'block';
-    if (lastTab === 'create') {
-      document.getElementById('submit-wrap').classList.remove('hidden');
-      document.getElementById('liters-create').value = '';
-      document.getElementById('receiver').value = '';
-      document.getElementById('receiver-preview').classList.remove('show');
-      document.getElementById('date-create').valueAsDate = new Date();
-    } else if (lastTab === 'outgoing') {
-      switchTab('outgoing');
+    if (!opt || !opt.value) {
+      hint.classList.remove('show');
+      return;
+    }
+    const car = opt.dataset.car;
+    if (car) {
+      document.getElementById('car-hint-text').textContent = car;
+      hint.classList.add('show');
     } else {
-      switchTab('confirm');
+      hint.classList.remove('show');
     }
   }
 
-  // ── TABS ──────────────────────────────────────────────────
+  // ── KEYBOARD FIX (visualViewport) ────────────────────────
+  function scrollToField(el) {
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', _onViewportResize);
+    window.visualViewport.addEventListener('scroll', _onViewportResize);
+  }
+
+  function _onViewportResize() {
+    const btn = document.getElementById('create-submit-wrap');
+    if (!btn || btn.classList.contains('hidden')) return;
+
+    const viewport    = window.visualViewport;
+    const windowH     = window.innerHeight;
+    const viewportH   = viewport.height;
+    const viewportTop = viewport.offsetTop;
+
+    const keyboardH = windowH - viewportTop - viewportH;
+    btn.style.transform = keyboardH > 0
+      ? `translateY(-${keyboardH}px)`
+      : 'translateY(0)';
+  }
+
+  // ── TABS ─────────────────────────────────────────────────
   function switchTab(tab) {
     lastTab = tab;
-    ['create', 'confirm', 'outgoing'].forEach(t => {
-      document.getElementById('tab-' + t).classList.toggle('active', t === tab);
-      document.getElementById('screen-' + t).classList.toggle('active', t === tab);
-    });
-    document.getElementById('submit-wrap').classList.toggle('hidden', tab !== 'create');
+    document.getElementById('tab-create').classList.toggle('active',   tab === 'create');
+    document.getElementById('tab-confirm').classList.toggle('active',  tab === 'confirm');
+    document.getElementById('tab-outgoing').classList.toggle('active', tab === 'outgoing');
+    document.getElementById('screen-create').classList.toggle('active',   tab === 'create');
+    document.getElementById('screen-confirm').classList.toggle('active',  tab === 'confirm');
+    document.getElementById('screen-outgoing').classList.toggle('active', tab === 'outgoing');
+    document.getElementById('create-submit-wrap').classList.toggle('hidden', tab !== 'create');
     if (tab === 'confirm')  loadIncoming();
     if (tab === 'outgoing') loadOutgoing();
-  }
-
-  // ── RECEIVER PREVIEW ──────────────────────────────────────
-  function onReceiverChange() {
-    const id  = document.getElementById('receiver').value;
-    const drv = allDrivers.find(d => d.id === id);
-    const preview = document.getElementById('receiver-preview');
-    if (drv) {
-      document.getElementById('preview-name').textContent = drv.name;
-      document.getElementById('preview-car').textContent  = drv.car ? '🚛 ' + drv.car : '';
-      preview.classList.add('show');
-    } else {
-      preview.classList.remove('show');
-    }
-  }
-
-  // ── BADGE ─────────────────────────────────────────────────
-  async function loadIncomingBadge() {
-    try {
-      const res   = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id));
-      const items = await res.json();
-      const cnt   = Array.isArray(items) ? items.filter(t => t.status === 'Создан').length : 0;
-      const badge = document.getElementById('badge-confirm');
-      if (cnt > 0) { badge.textContent = cnt; badge.classList.add('show'); }
-    } catch {}
   }
 
   // ── CREATE ────────────────────────────────────────────────
@@ -654,18 +807,22 @@ select option { background: var(--surface2); }
     const receiverId = document.getElementById('receiver').value;
     const liters     = document.getElementById('liters-create').value;
     const date       = document.getElementById('date-create').value;
-    if (!receiverId)          return showStatus({ ok: false, title: 'Выберите получателя' });
+
+    if (!receiverId)             return showStatus({ ok: false, title: 'Выберите получателя' });
     if (!liters || +liters <= 0) return showStatus({ ok: false, title: 'Введите количество литров' });
-    if (!date)                return showStatus({ ok: false, title: 'Укажите дату' });
+    if (!date)                   return showStatus({ ok: false, title: 'Укажите дату перелива' });
 
     const btn = document.getElementById('btn-send');
-    btn.disabled = true; btn.textContent = 'Отправка…';
+    const txt = document.getElementById('btn-send-text');
+    btn.disabled = true;
+    txt.textContent = 'Отправка…';
+
     try {
-      const res  = await fetch(API_URL, {
+      const res = await fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify({
           action: 'createTransfer',
-          senderId:   currentDriver.id,
+          senderId: currentDriver.id,
           senderName: currentDriver.name,
           receiverId, liters: +liters, date,
         }),
@@ -676,69 +833,104 @@ select option { background: var(--surface2); }
         showStatus({
           ok: true,
           title: 'Заявка отправлена',
-          sub: `${liters} л → ${recv?.name || receiverId}\n\nПолучатель получит уведомление в Telegram и должен подтвердить перелив в приложении.`,
+          sub: `${liters} л → ${recv?.name || receiverId}\n\nВодитель подтвердит перелив в приложении.`,
+          showNotify: true,
         });
       } else {
-        showStatus({ ok: false, title: 'Ошибка отправки', sub: 'Попробуйте ещё раз', errorDetail: data.error || 'Неизвестная ошибка' });
+        showStatus({ ok: false, title: 'Ошибка отправки', sub: 'Попробуйте ещё раз', errorDetail: data.error || '' });
         logError('createTransfer', data.error);
       }
     } catch (e) {
       showStatus({ ok: false, title: 'Ошибка сети', sub: 'Проверьте соединение', errorDetail: e.message });
       logError('createTransfer/network', e.message);
     } finally {
-      btn.disabled = false; btn.textContent = 'Отправить заявку';
+      btn.disabled = false;
+      txt.textContent = 'Отправить заявку';
     }
   }
 
-  // ── INCOMING ──────────────────────────────────────────────
+  // ── BADGE ─────────────────────────────────────────────────
+  async function loadIncomingCount() {
+    try {
+      const res = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id));
+      const items = await res.json();
+      if (!Array.isArray(items)) return;
+      const pending = items.filter(t => t.status === 'Создан').length;
+      const badge = document.getElementById('pending-badge');
+      if (pending > 0) { badge.textContent = pending; badge.classList.add('show'); }
+    } catch {}
+  }
+
+  // ── INCOMING LIST ─────────────────────────────────────────
   async function loadIncoming() {
     const list = document.getElementById('confirm-list');
-    list.innerHTML = `<div class="list-spinner"><div class="spinner-ring"></div>Загрузка…</div>`;
+    list.innerHTML = `<div class="list-spinner"><div class="spinner"></div>Загрузка…</div>`;
     try {
-      const res   = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id));
+      const res = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id));
       const items = await res.json();
 
       if (!Array.isArray(items) || !items.length) {
         list.innerHTML = `
           <div class="empty-state">
             <span class="empty-state-icon">✅</span>
-            <div class="empty-state-title">Входящих переливов нет</div>
-            <div class="empty-state-sub">Если вам передали топливо — попросите водителя создать заявку в приложении</div>
+            <div class="empty-state-title">Входящих нет</div>
+            <div class="empty-state-sub">Если вам передавали топливо — попросите водителя создать заявку в приложении</div>
           </div>`;
         return;
       }
 
-      // Обновляем бейдж
-      const pendingCnt = items.filter(t => t.status === 'Создан').length;
-      const badge = document.getElementById('badge-confirm');
-      if (pendingCnt > 0) { badge.textContent = pendingCnt; badge.classList.add('show'); }
-      else badge.classList.remove('show');
-
+      document.getElementById('pending-badge').classList.remove('show');
       list.innerHTML = '';
+
       items.forEach((t, idx) => {
-        const sender  = allDrivers.find(d => d.id === t.senderId);
-        const car     = t.senderCar || sender?.car || '';
-        const name    = sender ? sender.name : t.senderId;
-        const initials = name.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+        const sender = allDrivers.find(d => d.id === t.senderId);
+        const senderName = sender ? sender.name : (t.senderId || '?');
+        const initials = senderName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+        const car = t.senderCar || sender?.car || '';
         const isPending = t.status === 'Создан';
 
-        const statusMap = {
-          'Подтверждён':    ['ok',  '✓ Подтверждено'],
-          'Скорректирован': ['adj', `✏️ Скорректировано: ${t.litersFinal} л`],
-          'Отклонён':       ['rej', '✕ Отклонено'],
-        };
-        const [cls, label] = statusMap[t.status] || ['rej', t.status];
-
         const card = document.createElement('div');
-        card.id = 'trf-' + t.id;
         card.className = 'trf-card' + (isPending ? '' : ' closed');
+        card.id = 'trf-' + t.id;
         card.style.animationDelay = (idx * 0.05) + 's';
+
+        let actionsHtml = '';
+        if (isPending) {
+          actionsHtml = `
+            <div class="trf-actions">
+              <div class="trf-btn-row">
+                <button class="btn-confirm"        onclick="respond('${t.id}','confirm',this)">✓ Подтвердить</button>
+                <button class="btn-reject-trigger" onclick="showRejectConfirm('${t.id}')">✕ Отклонить</button>
+              </div>
+              <div class="reject-confirm" id="reject-confirm-${t.id}">
+                <div class="reject-confirm-text">Точно отклонить? Перелив не попадёт в расчёт вахты.</div>
+                <div class="reject-confirm-row">
+                  <button class="btn-reject-yes" onclick="respond('${t.id}','reject',this)">Да, отклонить</button>
+                  <button class="btn-reject-no"  onclick="hideRejectConfirm('${t.id}')">Отмена</button>
+                </div>
+              </div>
+              <button class="btn-adjust-toggle" onclick="toggleAdjust('${t.id}')">✏️ Указать другой объём</button>
+              <div class="adjust-row" id="adjust-row-${t.id}">
+                <input type="number" id="adj-${t.id}" placeholder="Объём, л" min="1" step="1"
+                       onfocus="scrollToField(this)">
+                <button class="btn-adjust-save" onclick="respondAdjust('${t.id}')">Сохранить</button>
+              </div>
+            </div>`;
+        } else {
+          const statusMap = {
+            'Подтверждён':    ['ok',  '✓ Подтверждено'],
+            'Скорректирован': ['adj', `✏️ Скорректировано: ${t.litersFinal} л`],
+            'Отклонён':       ['rej', '✕ Отклонено'],
+          };
+          const [cls, label] = statusMap[t.status] || ['rej', t.status];
+          actionsHtml = `<div class="trf-closed-status ${cls}">${label}</div>`;
+        }
 
         card.innerHTML = `
           <div class="trf-head">
             <div class="trf-avatar">${initials}</div>
             <div style="flex:1;min-width:0">
-              <div class="trf-sender-name">${name}</div>
+              <div class="trf-sender-name">${senderName}</div>
               ${car ? `<div class="trf-sender-car">🚛 ${car}</div>` : ''}
             </div>
             <div class="trf-amount-block">
@@ -748,139 +940,134 @@ select option { background: var(--surface2); }
           </div>
           <div class="trf-meta">
             <span>📅 ${t.transferDate || '—'}</span>
-            <span>🕐 ${(t.createdAt || '—').slice(0, 16)}</span>
+            <span>🕐 ${t.createdAt   || '—'}</span>
           </div>
-          ${isPending ? `
-          <div class="trf-actions">
-            <div class="trf-action-row">
-              <button class="btn btn-success" onclick="respond('${t.id}','confirm',this)">✓ Подтвердить</button>
-              <button class="btn btn-outline"  onclick="toggleAdjust('${t.id}')">Изменить</button>
-            </div>
-            <div id="adjust-${t.id}" style="display:none" class="trf-actions">
-              <div class="trf-adjust-row">
-                <input type="number" id="adj-${t.id}" placeholder="Объём, л" min="1" step="1"
-                       onfocus="scrollToField(this)">
-                <button class="btn btn-warn" onclick="respondAdjust('${t.id}',this)">OK</button>
-              </div>
-              <div class="trf-adjust-hint">Введите фактически полученное количество</div>
-            </div>
-            <button class="btn btn-outline" style="color:var(--red);border-color:rgba(248,81,73,.3)"
-                    onclick="confirmReject('${t.id}',this)">✕ Отклонить</button>
-          </div>` : `<div class="trf-closed-status ${cls}">${label}</div>`}`;
+          ${actionsHtml}`;
 
         list.appendChild(card);
       });
     } catch (e) {
-      list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-title">Ошибка загрузки</div><div class="empty-state-sub">Проверьте соединение</div></div>`;
+      list.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">⚠️</span>
+          <div class="empty-state-title">Ошибка загрузки</div>
+          <div class="empty-state-sub">Проверьте соединение и попробуйте снова</div>
+        </div>`;
       logError('loadIncoming', e.message);
     }
   }
 
-  // Раскрывает/скрывает поле ввода "Изменить"
+  function showRejectConfirm(id) { document.getElementById('reject-confirm-' + id)?.classList.add('show'); }
+  function hideRejectConfirm(id) { document.getElementById('reject-confirm-' + id)?.classList.remove('show'); }
+
   function toggleAdjust(id) {
-    const el = document.getElementById('adjust-' + id);
-    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    const row = document.getElementById('adjust-row-' + id);
+    row?.classList.toggle('show');
+    if (row?.classList.contains('show')) document.getElementById('adj-' + id)?.focus();
   }
 
-  // Двойное нажатие для отклонения (защита от случайного тапа)
-  const _rejectPending = {};
-  function confirmReject(id, btn) {
-    if (_rejectPending[id]) {
-      clearTimeout(_rejectPending[id]);
-      delete _rejectPending[id];
-      respond(id, 'reject', btn);
-    } else {
-      btn.textContent = 'Нажмите ещё раз для отклонения';
-      btn.style.background = 'var(--red-dim)';
-      _rejectPending[id] = setTimeout(() => {
-        btn.textContent = '✕ Отклонить';
-        btn.style.background = '';
-        delete _rejectPending[id];
-      }, 3000);
-    }
-  }
-
-  // ── RESPOND ───────────────────────────────────────────────
-  async function respond(id, responseType, btn) {
-    const card = document.getElementById('trf-' + id);
-    _lock(card, true);
+  // ── RESPOND ──────────────────────────────────────────────
+  async function respond(id, responseType) {
+    _lockCard(id, true);
     try {
-      const res  = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'respondTransfer', id, responseType, responderName: currentDriver.name }) });
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'respondTransfer', id, responseType, responderName: currentDriver.name }),
+      });
       const data = await res.json();
       if (data.ok) {
-        // Инлайн-обновление карточки — не уходим на статус-экран
-        if (card) {
-          const actions = card.querySelector('.trf-actions');
-          const statusMap = { confirm: ['ok', '✓ Подтверждено'], reject: ['rej', '✕ Отклонено'] };
-          const [cls, label] = statusMap[responseType] || ['ok', ''];
-          if (actions) {
-            const statusEl = document.createElement('div');
-            statusEl.className = `trf-closed-status ${cls}`;
-            statusEl.textContent = label;
-            actions.replaceWith(statusEl);
-          }
-          card.classList.add('closed');
-        }
-        // Обновляем бейдж
-        loadIncomingBadge();
+        lastTab = 'confirm';
+        const m = responseType === 'confirm'
+          ? { title: 'Подтверждено',  sub: 'Перелив учтён в расчёте вахты' }
+          : { title: 'Отклонено',     sub: 'Перелив не попадёт в расчёт' };
+        showStatus({ ok: true, ...m });
       } else {
         showStatus({ ok: false, title: 'Ошибка', errorDetail: data.error || '' });
         logError('respondTransfer', data.error);
-        _lock(card, false);
+        _lockCard(id, false);
       }
     } catch (e) {
       showStatus({ ok: false, title: 'Ошибка сети', errorDetail: e.message });
       logError('respondTransfer/network', e.message);
-      _lock(card, false);
+      _lockCard(id, false);
     }
   }
 
-  async function respondAdjust(id, btn) {
+  async function respondAdjust(id) {
     const liters = document.getElementById('adj-' + id)?.value;
     if (!liters || +liters <= 0) return showStatus({ ok: false, title: 'Введите объём' });
-    const card = document.getElementById('trf-' + id);
-    _lock(card, true);
+    _lockCard(id, true);
     try {
-      const res  = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'respondTransfer', id, responseType: 'adjust', liters: +liters, responderName: currentDriver.name }) });
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'respondTransfer', id, responseType: 'adjust', liters: +liters, responderName: currentDriver.name }),
+      });
       const data = await res.json();
       if (data.ok) {
-        if (card) {
-          const actions = card.querySelector('.trf-actions');
-          if (actions) {
-            const statusEl = document.createElement('div');
-            statusEl.className = 'trf-closed-status adj';
-            statusEl.textContent = `✏️ Скорректировано: ${liters} л`;
-            actions.replaceWith(statusEl);
-          }
-          card.classList.add('closed');
-        }
-        loadIncomingBadge();
+        lastTab = 'confirm';
+        showStatus({ ok: true, title: 'Скорректировано', sub: `Принято ${liters} л вместо заявленного объёма` });
       } else {
         showStatus({ ok: false, title: 'Ошибка', errorDetail: data.error || '' });
         logError('respondAdjust', data.error);
-        _lock(card, false);
+        _lockCard(id, false);
       }
     } catch (e) {
       showStatus({ ok: false, title: 'Ошибка сети', errorDetail: e.message });
       logError('respondAdjust/network', e.message);
-      _lock(card, false);
+      _lockCard(id, false);
     }
   }
 
-  // ── OUTGOING (МОИ) ────────────────────────────────────────
+  function _lockCard(id, state) {
+    document.getElementById('trf-' + id)?.querySelectorAll('button, input').forEach(el => el.disabled = state);
+  }
+
+  // ── STATUS SCREEN ─────────────────────────────────────────
+  function showStatus({ ok, title, sub = '', errorDetail = '', showNotify = false }) {
+    document.getElementById('main-screen').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('status-screen').style.display = 'flex';
+
+    document.getElementById('status-icon').textContent  = ok ? '✅' : '❌';
+    document.getElementById('status-title').textContent = title;
+    document.getElementById('status-sub').textContent   = sub;
+
+    document.getElementById('status-notify').classList.toggle('show', ok && showNotify);
+
+    const errEl = document.getElementById('status-error-detail');
+    if (!ok && errorDetail) { errEl.textContent = errorDetail; errEl.style.display = 'block'; }
+    else errEl.style.display = 'none';
+  }
+
+  function hideStatus() {
+    document.getElementById('status-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display   = 'block';
+    if (lastTab === 'create') {
+      document.getElementById('liters-create').value = '';
+      document.getElementById('receiver').value = '';
+      document.getElementById('car-hint').classList.remove('show');
+      document.getElementById('date-create').valueAsDate = new Date();
+    } else if (lastTab === 'outgoing') {
+      switchTab('outgoing');
+    } else {
+      switchTab('confirm');
+    }
+  }
+
+  // ── OUTGOING LIST ─────────────────────────────────────────
   async function loadOutgoing() {
     const list = document.getElementById('outgoing-list');
-    list.innerHTML = `<div class="list-spinner"><div class="spinner-ring"></div>Загрузка…</div>`;
+    list.innerHTML = `<div class="list-spinner"><div class="spinner"></div>Загрузка…</div>`;
     try {
-      const res   = await fetch(API_URL + '?action=getOutgoingTransfers&driverId=' + encodeURIComponent(currentDriver.id));
+      const res = await fetch(API_URL + '?action=getOutgoingTransfers&driverId=' + encodeURIComponent(currentDriver.id));
       const items = await res.json();
 
       if (!Array.isArray(items) || !items.length) {
         list.innerHTML = `
           <div class="empty-state">
             <span class="empty-state-icon">📤</span>
-            <div class="empty-state-title">Отправленных заявок нет</div>
-            <div class="empty-state-sub">Здесь появятся переливы которые вы отправили другим водителям</div>
+            <div class="empty-state-title">Отправленных нет</div>
+            <div class="empty-state-sub">Здесь появятся заявки которые вы отправили другим водителям</div>
           </div>`;
         return;
       }
@@ -888,10 +1075,9 @@ select option { background: var(--surface2); }
       list.innerHTML = '';
       items.forEach((t, idx) => {
         const receiver = allDrivers.find(d => d.id === t.receiverId);
-        const rName    = t.receiverName || receiver?.name || '?';
-        const car      = receiver?.car || '';
-        const initials = rName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
-        const isClosed = t.status !== 'Создан';
+        const receiverName = t.receiverName || (receiver ? receiver.name : '?');
+        const initials = receiverName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+        const car = receiver?.car || '';
 
         const statusMap = {
           'Создан':         ['wait', '⏳ Ожидает подтверждения'],
@@ -900,6 +1086,7 @@ select option { background: var(--surface2); }
           'Отклонён':       ['rej',  '✕ Отклонено'],
         };
         const [cls, label] = statusMap[t.status] || ['rej', t.status];
+        const isClosed = t.status !== 'Создан';
 
         const card = document.createElement('div');
         card.className = 'trf-card' + (isClosed ? ' closed' : '');
@@ -909,7 +1096,7 @@ select option { background: var(--surface2); }
           <div class="trf-head">
             <div class="trf-avatar out">${initials}</div>
             <div style="flex:1;min-width:0">
-              <div class="trf-sender-name">${rName}</div>
+              <div class="trf-sender-name">${receiverName}</div>
               ${car ? `<div class="trf-sender-car">🚛 ${car}</div>` : ''}
             </div>
             <div class="trf-amount-block">
@@ -919,48 +1106,34 @@ select option { background: var(--surface2); }
           </div>
           <div class="trf-meta">
             <span>📅 ${t.transferDate || '—'}</span>
-            <span>🕐 ${(t.createdAt || '—').slice(0, 16)}</span>
+            <span>🕐 ${t.createdAt || '—'}</span>
           </div>
           <div class="trf-closed-status ${cls}">${label}</div>`;
 
         list.appendChild(card);
       });
     } catch (e) {
-      list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-title">Ошибка загрузки</div></div>`;
+      list.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">⚠️</span>
+          <div class="empty-state-title">Ошибка загрузки</div>
+          <div class="empty-state-sub">Проверьте соединение и попробуйте снова</div>
+        </div>`;
       logError('loadOutgoing', e.message);
     }
   }
 
-  // ── KEYBOARD FIX (visualViewport) ────────────────────────
-  function scrollToField(el) {
-    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
-  }
-
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', _onViewportResize);
-    window.visualViewport.addEventListener('scroll', _onViewportResize);
-  }
-
-  function _onViewportResize() {
-    const wrap = document.getElementById('submit-wrap');
-    if (!wrap || wrap.classList.contains('hidden')) return;
-    const vp      = window.visualViewport;
-    const kbdH    = window.innerHeight - vp.offsetTop - vp.height;
-    wrap.style.transform = kbdH > 0 ? `translateY(-${kbdH}px)` : '';
-  }
-
-  // ── UTILS ─────────────────────────────────────────────────
-  function _lock(card, state) {
-    card?.querySelectorAll('button, input').forEach(el => el.disabled = state);
-  }
-
+  // ── LOG ERROR ─────────────────────────────────────────────
   async function logError(context, message) {
     try {
-      await fetch(API_URL, { method: 'POST', body: JSON.stringify({
-        action: 'logError', context, message,
-        user: currentDriver?.name || tgUsername || 'unknown',
-        ts: new Date().toISOString(),
-      })});
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'logError', context, message,
+          user: currentDriver?.name || tgUsername || 'unknown',
+          ts: new Date().toISOString(),
+        }),
+      });
     } catch {}
   }
 
