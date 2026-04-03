@@ -6,85 +6,441 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <title>Переливы топлива</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:#0f1117;--card:#1a1d2e;--border:#2a2d3e;
-      --accent:#4f8ef7;--accent2:#3dd68c;--danger:#f74f4f;--warn:#f7a84f;
-      --text:#e8eaf0;--muted:#8892a4;--radius:12px;
-      --font:'Segoe UI',system-ui,sans-serif;
+      --bg:         #0d1117;
+      --surface:    #161b22;
+      --surface2:   #1c2128;
+      --border:     #30363d;
+      --accent:     #388bfd;
+      --accent-dim: rgba(56,139,253,.14);
+      --green:      #3fb950;
+      --green-dim:  rgba(63,185,80,.14);
+      --red:        #f85149;
+      --red-dim:    rgba(248,81,73,.12);
+      --yellow:     #d29922;
+      --yellow-dim: rgba(210,153,34,.13);
+      --text:       #e6edf3;
+      --text2:      #8b949e;
+      --text3:      #6e7681;
+      --mono:       'IBM Plex Mono', monospace;
+      --sans:       'IBM Plex Sans', sans-serif;
+      --radius:     10px;
     }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:16px;padding-bottom:40px}
 
 ```
-/* СТАРТОВЫЙ ЭКРАН */
-#auth-screen{display:flex;flex-direction:column;justify-content:center;min-height:80vh;padding:32px 24px}
-.splash-header{display:flex;align-items:center;gap:14px;margin-bottom:32px}
-.splash-bar{width:4px;height:56px;background:var(--accent);border-radius:2px;flex-shrink:0}
-.splash-label{font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
-.splash-title{font-size:28px;font-weight:700;color:var(--text);line-height:1.1}
-.splash-body{font-size:13px;color:var(--muted);line-height:1.65;padding-left:18px;border-left:1px solid var(--border);margin-bottom:32px}
-.splash-status{padding-left:18px;font-size:11px;color:var(--accent);letter-spacing:1px}
-#auth-msg{display:none;margin-top:16px;padding:14px 16px;background:rgba(247,79,79,.1);border:1px solid rgba(247,79,79,.3);border-radius:var(--radius);font-size:14px;color:#f7a8a8;line-height:1.5}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-/* СТАТУС-БАННЕР */
-#status-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;gap:16px;padding:24px}
-.status-icon{font-size:72px;line-height:1}
-.status-title{font-size:26px;font-weight:700;color:var(--text)}
-.status-sub{font-size:15px;color:var(--muted);max-width:260px;line-height:1.6;white-space:pre-line}
-.status-error-detail{display:none;font-size:12px;color:var(--danger);background:rgba(247,79,79,.08);border:1px solid rgba(247,79,79,.2);border-radius:8px;padding:10px 14px;max-width:280px;word-break:break-word;text-align:left;line-height:1.5}
-#status-back-btn{margin-top:8px;padding:12px 32px;background:transparent;border:1.5px solid var(--border);border-radius:var(--radius);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer}
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-/* ОСНОВНОЙ ЭКРАН */
-.user-badge{background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.3);border-radius:100px;padding:6px 14px;font-size:13px;color:var(--accent);margin-bottom:16px;display:inline-block}
-.tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:nowrap}
-.tab-btn{flex:1;padding:9px 4px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;min-width:0}
-.tab-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.1)}
-.screen{display:none}.screen.active{display:block}
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
-label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
-select,input[type="number"],input[type="date"]{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:16px;font-family:var(--font);margin-bottom:14px;-webkit-appearance:none}
-select:focus,input:focus{outline:none;border-color:var(--accent)}
-select option{background:#1a1d2e}
-.btn{width:100%;padding:14px;border-radius:var(--radius);border:none;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s}
-.btn:active{opacity:.8;transform:scale(.98)}.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-primary{background:var(--accent);color:#fff}.btn-success{background:var(--accent2);color:#111}
-.btn-danger{background:var(--danger);color:#fff}.btn-warn{background:var(--warn);color:#111}
+@keyframes fadeUp  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes pulse   { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+@keyframes spin    { to { transform:rotate(360deg); } }
 
-/* КАРТОЧКИ ПЕРЕЛИВОВ */
-.transfer-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px}
-.transfer-card .from{font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
-.transfer-card .sender-name{font-size:15px;font-weight:600;margin-bottom:2px}
-.transfer-card .sender-car{font-size:12px;color:var(--muted);margin-bottom:10px}
-.transfer-card .amount{font-size:30px;font-weight:800;color:var(--accent);margin-bottom:4px;line-height:1}
-.transfer-card .meta{font-size:13px;color:var(--muted);margin-bottom:14px}
-.action-row{display:flex;gap:8px}.action-row .btn{padding:11px;font-size:13px}
-.adjust-row{display:flex;gap:8px;margin-top:10px;align-items:stretch}
-.adjust-row input{margin:0;flex:1;padding:11px 12px;font-size:14px}
-.adjust-row .btn{flex:none;width:auto;padding:11px 16px;font-size:13px}
-.transfer-card--closed{opacity:.6;border-style:dashed}
-.closed-status{font-size:14px;font-weight:700;padding:6px 0 2px}
-.empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:14px;line-height:1.6}
-.empty .icon{font-size:36px;display:block;margin-bottom:10px}
-.spinner{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+/* ── AUTH SCREEN ───────────────────────────────────── */
+#auth-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 24px;
+  animation: fadeUp .35s ease;
+}
+.auth-logo {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.auth-title {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.auth-sub {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 40px;
+  line-height: 1.5;
+}
+.auth-spinner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text3);
+}
+.spinner-ring {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  flex-shrink: 0;
+}
+.auth-error {
+  display: none;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--red-dim);
+  border: 1px solid rgba(248,81,73,.25);
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: #ffa8a8;
+  line-height: 1.5;
+}
+.pulse { animation: pulse 1.4s ease infinite; }
+
+/* ── STATUS SCREEN ─────────────────────────────────── */
+#status-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 24px;
+  text-align: center;
+  gap: 12px;
+}
+.status-icon { font-size: 64px; line-height: 1; margin-bottom: 4px; }
+.status-title { font-size: 24px; font-weight: 700; }
+.status-sub { font-size: 14px; color: var(--text2); max-width: 260px; line-height: 1.6; white-space: pre-line; }
+.status-error-detail {
+  display: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid rgba(248,81,73,.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  max-width: 280px;
+  word-break: break-word;
+  text-align: left;
+  line-height: 1.5;
+}
+#status-back-btn {
+  margin-top: 8px;
+  padding: 12px 32px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── MAIN SCREEN ───────────────────────────────────── */
+#main-screen { display: none; }
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 0;
+}
+.app-logo {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 5px 12px 5px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.user-dot {
+  width: 8px; height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── TABS ──────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px 0;
+}
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 4px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+  min-width: 0;
+  position: relative;
+}
+.tab-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+/* Бейдж с количеством ожидающих */
+.tab-badge {
+  display: none;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 100px;
+  padding: 1px 5px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 14px;
+}
+.tab-badge.show { display: inline-block; }
+
+/* ── SCREEN CONTAINER ──────────────────────────────── */
+.screen { display: none; padding: 12px 16px 100px; }
+.screen.active { display: block; animation: fadeUp .22s ease; }
+
+/* ── FORM ──────────────────────────────────────────── */
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.field-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  color: var(--text2);
+  margin-bottom: 6px;
+  display: block;
+}
+select, input[type="number"], input[type="date"] {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 16px; /* 16px — iOS не зумирует */
+  font-family: var(--sans);
+  margin-bottom: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="number"] { font-family: var(--mono); font-weight: 600; }
+select:focus, input:focus { outline: none; border-color: var(--accent); }
+select option { background: var(--surface2); }
+.field-hint {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 14px;
+}
+
+/* Превью выбранного получателя */
+.receiver-preview {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(56,139,253,.25);
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.receiver-preview.show { display: flex; }
+.receiver-preview-name { font-size: 14px; font-weight: 600; }
+.receiver-preview-car  { font-size: 12px; color: var(--text2); }
+
+/* Фиксированная кнопка отправки */
+.submit-wrap {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, transparent, var(--bg) 35%);
+  z-index: 50;
+  will-change: transform;
+  transition: transform .1s ease;
+}
+.submit-wrap.hidden { display: none; }
+
+.btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: none;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s, transform .08s;
+}
+.btn:active { opacity: .8; transform: scale(.98); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-success { background: var(--green); color: #0d1117; }
+.btn-danger  { background: var(--red); color: #fff; }
+.btn-warn    { background: var(--yellow); color: #0d1117; }
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text2);
+  font-size: 13px;
+  padding: 10px;
+}
+
+/* ── TRANSFER CARDS ────────────────────────────────── */
+.trf-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+  animation: fadeUp .22s ease both;
+}
+.trf-card.closed { opacity: .65; border-style: dashed; }
+
+.trf-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px 0;
+}
+.trf-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(56,139,253,.35);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.trf-avatar.out {
+  background: var(--green-dim);
+  border-color: rgba(63,185,80,.3);
+  color: var(--green);
+}
+.trf-sender-name { font-size: 15px; font-weight: 600; margin-bottom: 1px; }
+.trf-sender-car  { font-size: 12px; color: var(--text2); }
+.trf-amount-block { text-align: right; flex-shrink: 0; }
+.trf-liters {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1;
+}
+.trf-liters-unit { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.trf-meta {
+  display: flex;
+  gap: 12px;
+  padding: 8px 14px 12px;
+  font-size: 12px;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Кнопки действий */
+.trf-actions { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.trf-action-row { display: flex; gap: 8px; }
+.trf-action-row .btn { flex: 1; padding: 11px; font-size: 13px; }
+.trf-adjust-row { display: flex; gap: 8px; align-items: stretch; }
+.trf-adjust-row input {
+  flex: 1; margin: 0; padding: 11px 12px;
+  font-size: 15px; font-family: var(--mono); font-weight: 600;
+}
+.trf-adjust-row .btn { flex: none; width: auto; padding: 11px 16px; font-size: 13px; }
+.trf-adjust-hint { font-size: 11px; color: var(--text3); }
+
+/* Статус закрытой карточки */
+.trf-closed-status {
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.trf-closed-status.ok   { color: var(--green); }
+.trf-closed-status.adj  { color: var(--yellow); }
+.trf-closed-status.rej  { color: var(--text2); }
+.trf-closed-status.wait { color: var(--accent); }
+
+/* ── EMPTY / SPINNER ───────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 56px 24px;
+  color: var(--text2);
+}
+.empty-state-icon  { font-size: 40px; display: block; margin-bottom: 14px; }
+.empty-state-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.empty-state-sub   { font-size: 13px; line-height: 1.6; }
+
+.list-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 20px;
+  color: var(--text3);
+  font-size: 13px;
+}
 ```
 
   </style>
 </head>
 <body>
 
+<!-- AUTH -->
+
 <div id="auth-screen">
-  <div class="splash-header">
-    <div class="splash-bar"></div>
-    <div>
-      <div class="splash-label">FuelShift</div>
-      <div class="splash-title">Переливы<br>топлива</div>
-    </div>
+  <div class="auth-logo">FuelShift</div>
+  <div class="auth-title">Переливы<br>топлива</div>
+  <div class="auth-sub">Учёт ведётся по вахтам.</div>
+  <div class="auth-spinner" id="auth-spinner">
+    <div class="spinner-ring pulse"></div>
+    <span>Авторизация…</span>
   </div>
-  <div class="splash-body">Авторизация через Telegram.<br>Учёт ведётся по вахтам.</div>
-  <div class="splash-status" id="auth-spinner">ЗАГРУЗКА…</div>
-  <div id="auth-msg"></div>
+  <div class="auth-error" id="auth-error"></div>
 </div>
+
+<!-- STATUS -->
 
 <div id="status-screen">
   <div class="status-icon" id="status-icon">✅</div>
@@ -94,26 +450,74 @@ select option{background:#1a1d2e}
   <button id="status-back-btn" onclick="hideStatus()">← Назад</button>
 </div>
 
-<div id="main-screen" style="display:none">
-  <div class="user-badge" id="user-badge">…</div>
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('create')">+ Создать</button>
-    <button class="tab-btn"        onclick="switchTab('confirm')">↓ Входящие</button>
-  </div>
-  <div class="screen active" id="screen-create">
-    <div class="card">
-      <label>Кому переливаете</label>
-      <select id="receiver"><option value="">— выберите водителя —</option></select>
-      <label>Литров</label>
-      <input type="number" id="liters-create" placeholder="например, 80" min="1" max="2000" step="1">
-      <label>Дата перелива</label>
-      <input type="date" id="date-create">
-      <button class="btn btn-primary" id="btn-send" onclick="submitCreate()">Отправить на подтверждение</button>
+<!-- MAIN -->
+
+<div id="main-screen">
+  <div class="top-bar">
+    <div class="app-logo">FuelShift</div>
+    <div class="user-badge">
+      <div class="user-dot"></div>
+      <span id="user-name">…</span>
     </div>
   </div>
-  <div class="screen" id="screen-confirm">
-    <div id="confirm-list"><div class="spinner">Загрузка…</div></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-create"  onclick="switchTab('create')">+ Создать</button>
+    <button class="tab-btn"        id="tab-confirm" onclick="switchTab('confirm')">
+      ↓ Входящие <span class="tab-badge" id="badge-confirm"></span>
+    </button>
+    <button class="tab-btn"        id="tab-outgoing" onclick="switchTab('outgoing')">↑ Мои</button>
   </div>
+
+  <!-- CREATE -->
+
+  <div class="screen active" id="screen-create">
+    <div class="form-card">
+      <label class="field-label">Кому переливаете</label>
+      <select id="receiver" onchange="onReceiverChange()">
+        <option value="">— выберите водителя —</option>
+      </select>
+      <div class="receiver-preview" id="receiver-preview">
+        <div>
+          <div class="receiver-preview-name" id="preview-name"></div>
+          <div class="receiver-preview-car"  id="preview-car"></div>
+        </div>
+      </div>
+
+```
+  <label class="field-label">Количество литров</label>
+  <input type="number" id="liters-create" placeholder="80" min="1" max="2000" step="1"
+         onfocus="scrollToField(this)">
+  <div class="field-hint">обычно 50–200 л</div>
+
+  <label class="field-label">Дата перелива</label>
+  <input type="date" id="date-create" onfocus="scrollToField(this)">
+</div>
+```
+
+  </div>
+
+  <!-- CONFIRM (INCOMING) -->
+
+  <div class="screen" id="screen-confirm">
+    <div id="confirm-list">
+      <div class="list-spinner"><div class="spinner-ring"></div>Загрузка…</div>
+    </div>
+  </div>
+
+  <!-- OUTGOING (МОИ) -->
+
+  <div class="screen" id="screen-outgoing">
+    <div id="outgoing-list">
+      <div class="list-spinner"><div class="spinner-ring"></div>Загрузка…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Фиксированная кнопка отправки -->
+
+<div class="submit-wrap" id="submit-wrap">
+  <button class="btn btn-primary" id="btn-send" onclick="submitCreate()">Отправить заявку</button>
 </div>
 
 <script>
@@ -127,13 +531,14 @@ select option{background:#1a1d2e}
 
   let currentDriver = null, allDrivers = [], lastTab = 'create';
 
+  // ── INIT ────────────────────────────────────────────────
   async function init() {
     document.getElementById('date-create').valueAsDate = new Date();
     try {
       const res = await fetch(API_URL + '?action=getDrivers');
       allDrivers = await res.json();
-      if (!Array.isArray(allDrivers)) throw new Error('Некорректный ответ');
-    } catch(e) {
+      if (!Array.isArray(allDrivers)) throw new Error('Некорректный ответ сервера');
+    } catch (e) {
       showAuthError('Не удалось подключиться к серверу.<br>Проверьте настройки Apps Script.');
       logError('init', e.message);
       return;
@@ -141,20 +546,20 @@ select option{background:#1a1d2e}
 
     if (tgUsername) {
       currentDriver = allDrivers.find(d =>
-        (d.tg||'').replace('@','').toLowerCase() === tgUsername
+        (d.tg || '').replace('@', '').toLowerCase() === tgUsername
       ) || null;
     }
 
     if (!currentDriver) {
       showAuthError(tgUsername
         ? `Ваш @${tgUsername} не найден в таблице.<br>Попросите руководителя добавить вас.`
-        : 'Откройте через бота в Telegram.');
+        : 'Откройте приложение через бота в Telegram.');
       return;
     }
 
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('main-screen').style.display = 'block';
-    document.getElementById('user-badge').textContent = '👤 ' + currentDriver.name;
+    document.getElementById('user-name').textContent = currentDriver.name;
 
     const sel = document.getElementById('receiver');
     allDrivers.filter(d => d.id !== currentDriver.id).forEach(d => {
@@ -163,17 +568,24 @@ select option{background:#1a1d2e}
       o.textContent = d.name + (d.car ? ', ' + d.car : '');
       sel.appendChild(o);
     });
+
+    // Считаем ожидающие входящие → бейдж
+    loadIncomingBadge();
   }
 
+  // ── AUTH ERROR ────────────────────────────────────────────
   function showAuthError(msg) {
     document.getElementById('auth-spinner').style.display = 'none';
-    const el = document.getElementById('auth-msg');
-    el.innerHTML = msg; el.style.display = 'block';
+    const el = document.getElementById('auth-error');
+    el.innerHTML = msg;
+    el.style.display = 'block';
   }
 
-  function showStatus({ ok, title, sub='', errorDetail='' }) {
-    document.getElementById('main-screen').style.display = 'none';
-    document.getElementById('auth-screen').style.display = 'none';
+  // ── STATUS SCREEN ─────────────────────────────────────────
+  function showStatus({ ok, title, sub = '', errorDetail = '' }) {
+    document.getElementById('main-screen').style.display  = 'none';
+    document.getElementById('auth-screen').style.display  = 'none';
+    document.getElementById('submit-wrap').classList.add('hidden');
     const s = document.getElementById('status-screen');
     s.style.display = 'flex';
     document.getElementById('status-icon').textContent  = ok ? '✅' : '❌';
@@ -188,165 +600,371 @@ select option{background:#1a1d2e}
     document.getElementById('status-screen').style.display = 'none';
     document.getElementById('main-screen').style.display   = 'block';
     if (lastTab === 'create') {
+      document.getElementById('submit-wrap').classList.remove('hidden');
       document.getElementById('liters-create').value = '';
       document.getElementById('receiver').value = '';
+      document.getElementById('receiver-preview').classList.remove('show');
       document.getElementById('date-create').valueAsDate = new Date();
+    } else if (lastTab === 'outgoing') {
+      switchTab('outgoing');
     } else {
       switchTab('confirm');
     }
   }
 
+  // ── TABS ──────────────────────────────────────────────────
   function switchTab(tab) {
     lastTab = tab;
-    document.querySelectorAll('.tab-btn').forEach((b,i) =>
-      b.classList.toggle('active', (i===0)===(tab==='create')));
-    document.getElementById('screen-create').classList.toggle('active',  tab==='create');
-    document.getElementById('screen-confirm').classList.toggle('active', tab==='confirm');
-    if (tab==='confirm') loadIncoming();
+    ['create', 'confirm', 'outgoing'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+      document.getElementById('screen-' + t).classList.toggle('active', t === tab);
+    });
+    document.getElementById('submit-wrap').classList.toggle('hidden', tab !== 'create');
+    if (tab === 'confirm')  loadIncoming();
+    if (tab === 'outgoing') loadOutgoing();
   }
 
+  // ── RECEIVER PREVIEW ──────────────────────────────────────
+  function onReceiverChange() {
+    const id  = document.getElementById('receiver').value;
+    const drv = allDrivers.find(d => d.id === id);
+    const preview = document.getElementById('receiver-preview');
+    if (drv) {
+      document.getElementById('preview-name').textContent = drv.name;
+      document.getElementById('preview-car').textContent  = drv.car ? '🚛 ' + drv.car : '';
+      preview.classList.add('show');
+    } else {
+      preview.classList.remove('show');
+    }
+  }
+
+  // ── BADGE ─────────────────────────────────────────────────
+  async function loadIncomingBadge() {
+    try {
+      const res   = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id));
+      const items = await res.json();
+      const cnt   = Array.isArray(items) ? items.filter(t => t.status === 'Создан').length : 0;
+      const badge = document.getElementById('badge-confirm');
+      if (cnt > 0) { badge.textContent = cnt; badge.classList.add('show'); }
+    } catch {}
+  }
+
+  // ── CREATE ────────────────────────────────────────────────
   async function submitCreate() {
     const receiverId = document.getElementById('receiver').value;
     const liters     = document.getElementById('liters-create').value;
     const date       = document.getElementById('date-create').value;
-    if (!receiverId)            return showStatus({ok:false, title:'Выберите получателя'});
-    if (!liters||+liters<=0)    return showStatus({ok:false, title:'Введите количество литров'});
-    if (!date)                  return showStatus({ok:false, title:'Укажите дату'});
+    if (!receiverId)          return showStatus({ ok: false, title: 'Выберите получателя' });
+    if (!liters || +liters <= 0) return showStatus({ ok: false, title: 'Введите количество литров' });
+    if (!date)                return showStatus({ ok: false, title: 'Укажите дату' });
 
     const btn = document.getElementById('btn-send');
-    btn.disabled=true; btn.textContent='Отправка…';
+    btn.disabled = true; btn.textContent = 'Отправка…';
     try {
-      const res = await fetch(API_URL, {
-        method:'POST',
-        body: JSON.stringify({action:'createTransfer', senderId:currentDriver.id, senderName:currentDriver.name, receiverId, liters:+liters, date}),
+      const res  = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'createTransfer',
+          senderId:   currentDriver.id,
+          senderName: currentDriver.name,
+          receiverId, liters: +liters, date,
+        }),
       });
       const data = await res.json();
       if (data.ok) {
-        const recv = allDrivers.find(d=>d.id===receiverId);
-        showStatus({ok:true, title:'Отправлено', sub:`${liters} л → ${recv?.name||receiverId}\nОжидает подтверждения`});
+        const recv = allDrivers.find(d => d.id === receiverId);
+        showStatus({
+          ok: true,
+          title: 'Заявка отправлена',
+          sub: `${liters} л → ${recv?.name || receiverId}\n\nПолучатель получит уведомление в Telegram и должен подтвердить перелив в приложении.`,
+        });
       } else {
-        showStatus({ok:false, title:'Ошибка отправки', sub:'Попробуйте ещё раз', errorDetail:data.error||'Неизвестная ошибка'});
+        showStatus({ ok: false, title: 'Ошибка отправки', sub: 'Попробуйте ещё раз', errorDetail: data.error || 'Неизвестная ошибка' });
         logError('createTransfer', data.error);
       }
-    } catch(e) {
-      showStatus({ok:false, title:'Ошибка сети', sub:'Проверьте соединение', errorDetail:e.message});
+    } catch (e) {
+      showStatus({ ok: false, title: 'Ошибка сети', sub: 'Проверьте соединение', errorDetail: e.message });
       logError('createTransfer/network', e.message);
     } finally {
-      btn.disabled=false; btn.textContent='Отправить на подтверждение';
+      btn.disabled = false; btn.textContent = 'Отправить заявку';
     }
   }
 
+  // ── INCOMING ──────────────────────────────────────────────
   async function loadIncoming() {
     const list = document.getElementById('confirm-list');
-    list.innerHTML = '<div class="spinner">Загрузка…</div>';
+    list.innerHTML = `<div class="list-spinner"><div class="spinner-ring"></div>Загрузка…</div>`;
     try {
-      const res = await fetch(API_URL+'?action=getTransfers&driverId='+encodeURIComponent(currentDriver.id));
+      const res   = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id));
       const items = await res.json();
-      if (!Array.isArray(items)||!items.length) {
-        list.innerHTML='<div class="empty"><span class="icon">✅</span>Входящих переливов<br>на подтверждение нет</div>';
+
+      if (!Array.isArray(items) || !items.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-state-icon">✅</span>
+            <div class="empty-state-title">Входящих переливов нет</div>
+            <div class="empty-state-sub">Если вам передали топливо — попросите водителя создать заявку в приложении</div>
+          </div>`;
         return;
       }
-      list.innerHTML = items.map(t => {
-        const sender = allDrivers.find(d=>d.id===t.senderId);
-        const car    = t.senderCar||(sender?.car)||'';
-        const isPending = t.status==='Создан';
-        const statusLabel = {'Подтверждён':'✅ Подтверждено','Скорректирован':'✏️ Скорректировано: '+t.litersFinal+' л','Отклонён':'❌ Отклонено'}[t.status]||t.status;
-        return `<div class="transfer-card ${isPending?'':'transfer-card--closed'}" id="trf-${t.id}">
-          <div class="from">От водителя</div>
-          <div class="sender-name">${sender?sender.name:t.senderId}</div>
-          ${car?`<div class="sender-car">🚛 ${car}</div>`:''}
-          <div class="amount">${t.litersClaimed} л</div>
-          <div class="meta">📅 ${t.transferDate||'—'}&nbsp;&nbsp;🕐 ${t.createdAt||'—'}</div>
-          ${isPending?`
-          <div class="action-row">
-            <button class="btn btn-success" onclick="respond('${t.id}','confirm')">✓ Подтвердить</button>
-            <button class="btn btn-danger"  onclick="respond('${t.id}','reject')">✕ Отклонить</button>
+
+      // Обновляем бейдж
+      const pendingCnt = items.filter(t => t.status === 'Создан').length;
+      const badge = document.getElementById('badge-confirm');
+      if (pendingCnt > 0) { badge.textContent = pendingCnt; badge.classList.add('show'); }
+      else badge.classList.remove('show');
+
+      list.innerHTML = '';
+      items.forEach((t, idx) => {
+        const sender  = allDrivers.find(d => d.id === t.senderId);
+        const car     = t.senderCar || sender?.car || '';
+        const name    = sender ? sender.name : t.senderId;
+        const initials = name.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+        const isPending = t.status === 'Создан';
+
+        const statusMap = {
+          'Подтверждён':    ['ok',  '✓ Подтверждено'],
+          'Скорректирован': ['adj', `✏️ Скорректировано: ${t.litersFinal} л`],
+          'Отклонён':       ['rej', '✕ Отклонено'],
+        };
+        const [cls, label] = statusMap[t.status] || ['rej', t.status];
+
+        const card = document.createElement('div');
+        card.id = 'trf-' + t.id;
+        card.className = 'trf-card' + (isPending ? '' : ' closed');
+        card.style.animationDelay = (idx * 0.05) + 's';
+
+        card.innerHTML = `
+          <div class="trf-head">
+            <div class="trf-avatar">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div class="trf-sender-name">${name}</div>
+              ${car ? `<div class="trf-sender-car">🚛 ${car}</div>` : ''}
+            </div>
+            <div class="trf-amount-block">
+              <div class="trf-liters">${t.litersClaimed}</div>
+              <div class="trf-liters-unit">литров</div>
+            </div>
           </div>
-          <div class="adjust-row">
-            <input type="number" id="adj-${t.id}" placeholder="Другой объём, л" min="1" step="1">
-            <button class="btn btn-warn" onclick="respondAdjust('${t.id}')">Изменить</button>
-          </div>`:`<div class="closed-status">${statusLabel}</div>`}
-        </div>`;
-      }).join('');
-    } catch(e) {
-      list.innerHTML='<div class="empty">Ошибка загрузки</div>';
+          <div class="trf-meta">
+            <span>📅 ${t.transferDate || '—'}</span>
+            <span>🕐 ${(t.createdAt || '—').slice(0, 16)}</span>
+          </div>
+          ${isPending ? `
+          <div class="trf-actions">
+            <div class="trf-action-row">
+              <button class="btn btn-success" onclick="respond('${t.id}','confirm',this)">✓ Подтвердить</button>
+              <button class="btn btn-outline"  onclick="toggleAdjust('${t.id}')">Изменить</button>
+            </div>
+            <div id="adjust-${t.id}" style="display:none" class="trf-actions">
+              <div class="trf-adjust-row">
+                <input type="number" id="adj-${t.id}" placeholder="Объём, л" min="1" step="1"
+                       onfocus="scrollToField(this)">
+                <button class="btn btn-warn" onclick="respondAdjust('${t.id}',this)">OK</button>
+              </div>
+              <div class="trf-adjust-hint">Введите фактически полученное количество</div>
+            </div>
+            <button class="btn btn-outline" style="color:var(--red);border-color:rgba(248,81,73,.3)"
+                    onclick="confirmReject('${t.id}',this)">✕ Отклонить</button>
+          </div>` : `<div class="trf-closed-status ${cls}">${label}</div>`}`;
+
+        list.appendChild(card);
+      });
+    } catch (e) {
+      list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-title">Ошибка загрузки</div><div class="empty-state-sub">Проверьте соединение</div></div>`;
       logError('loadIncoming', e.message);
     }
   }
 
-  async function respond(id, responseType) {
-    const card = document.getElementById('trf-'+id);
-    _lock(card,true);
-    try {
-      const res = await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'respondTransfer',id,responseType,responderName:currentDriver.name})});
-      const data = await res.json();
-      if (data.ok) {
-        lastTab='confirm';
-        showStatus({ok:true, title:responseType==='confirm'?'Подтверждено':'Отклонено',
-          sub:responseType==='confirm'?'Перелив учтён в расчёте вахты':'Перелив не будет учтён в расчёте'});
-      } else {
-        showStatus({ok:false,title:'Ошибка',errorDetail:data.error||''});
-        logError('respondTransfer',data.error); _lock(card,false);
-      }
-    } catch(e) {
-      showStatus({ok:false,title:'Ошибка сети',errorDetail:e.message});
-      logError('respondTransfer/network',e.message); _lock(card,false);
+  // Раскрывает/скрывает поле ввода "Изменить"
+  function toggleAdjust(id) {
+    const el = document.getElementById('adjust-' + id);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+
+  // Двойное нажатие для отклонения (защита от случайного тапа)
+  const _rejectPending = {};
+  function confirmReject(id, btn) {
+    if (_rejectPending[id]) {
+      clearTimeout(_rejectPending[id]);
+      delete _rejectPending[id];
+      respond(id, 'reject', btn);
+    } else {
+      btn.textContent = 'Нажмите ещё раз для отклонения';
+      btn.style.background = 'var(--red-dim)';
+      _rejectPending[id] = setTimeout(() => {
+        btn.textContent = '✕ Отклонить';
+        btn.style.background = '';
+        delete _rejectPending[id];
+      }, 3000);
     }
   }
 
-  async function respondAdjust(id) {
-    const liters = document.getElementById('adj-'+id)?.value;
-    if (!liters||+liters<=0) return showStatus({ok:false,title:'Введите объём'});
-    const card = document.getElementById('trf-'+id);
-    _lock(card,true);
+  // ── RESPOND ───────────────────────────────────────────────
+  async function respond(id, responseType, btn) {
+    const card = document.getElementById('trf-' + id);
+    _lock(card, true);
     try {
-      const res = await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'respondTransfer',id,responseType:'adjust',liters:+liters,responderName:currentDriver.name})});
+      const res  = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'respondTransfer', id, responseType, responderName: currentDriver.name }) });
       const data = await res.json();
       if (data.ok) {
-        lastTab='confirm';
-        showStatus({ok:true,title:'Скорректировано',sub:`Принято ${liters} л вместо заявленного объёма`});
+        // Инлайн-обновление карточки — не уходим на статус-экран
+        if (card) {
+          const actions = card.querySelector('.trf-actions');
+          const statusMap = { confirm: ['ok', '✓ Подтверждено'], reject: ['rej', '✕ Отклонено'] };
+          const [cls, label] = statusMap[responseType] || ['ok', ''];
+          if (actions) {
+            const statusEl = document.createElement('div');
+            statusEl.className = `trf-closed-status ${cls}`;
+            statusEl.textContent = label;
+            actions.replaceWith(statusEl);
+          }
+          card.classList.add('closed');
+        }
+        // Обновляем бейдж
+        loadIncomingBadge();
       } else {
-        showStatus({ok:false,title:'Ошибка',errorDetail:data.error||''});
-        logError('respondAdjust',data.error); _lock(card,false);
+        showStatus({ ok: false, title: 'Ошибка', errorDetail: data.error || '' });
+        logError('respondTransfer', data.error);
+        _lock(card, false);
       }
-    } catch(e) {
-      showStatus({ok:false,title:'Ошибка сети',errorDetail:e.message});
-      logError('respondAdjust/network',e.message); _lock(card,false);
+    } catch (e) {
+      showStatus({ ok: false, title: 'Ошибка сети', errorDetail: e.message });
+      logError('respondTransfer/network', e.message);
+      _lock(card, false);
     }
   }
 
-  function _lock(card,state) { card?.querySelectorAll('button').forEach(b=>b.disabled=state); }
+  async function respondAdjust(id, btn) {
+    const liters = document.getElementById('adj-' + id)?.value;
+    if (!liters || +liters <= 0) return showStatus({ ok: false, title: 'Введите объём' });
+    const card = document.getElementById('trf-' + id);
+    _lock(card, true);
+    try {
+      const res  = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'respondTransfer', id, responseType: 'adjust', liters: +liters, responderName: currentDriver.name }) });
+      const data = await res.json();
+      if (data.ok) {
+        if (card) {
+          const actions = card.querySelector('.trf-actions');
+          if (actions) {
+            const statusEl = document.createElement('div');
+            statusEl.className = 'trf-closed-status adj';
+            statusEl.textContent = `✏️ Скорректировано: ${liters} л`;
+            actions.replaceWith(statusEl);
+          }
+          card.classList.add('closed');
+        }
+        loadIncomingBadge();
+      } else {
+        showStatus({ ok: false, title: 'Ошибка', errorDetail: data.error || '' });
+        logError('respondAdjust', data.error);
+        _lock(card, false);
+      }
+    } catch (e) {
+      showStatus({ ok: false, title: 'Ошибка сети', errorDetail: e.message });
+      logError('respondAdjust/network', e.message);
+      _lock(card, false);
+    }
+  }
+
+  // ── OUTGOING (МОИ) ────────────────────────────────────────
+  async function loadOutgoing() {
+    const list = document.getElementById('outgoing-list');
+    list.innerHTML = `<div class="list-spinner"><div class="spinner-ring"></div>Загрузка…</div>`;
+    try {
+      const res   = await fetch(API_URL + '?action=getOutgoingTransfers&driverId=' + encodeURIComponent(currentDriver.id));
+      const items = await res.json();
+
+      if (!Array.isArray(items) || !items.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-state-icon">📤</span>
+            <div class="empty-state-title">Отправленных заявок нет</div>
+            <div class="empty-state-sub">Здесь появятся переливы которые вы отправили другим водителям</div>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = '';
+      items.forEach((t, idx) => {
+        const receiver = allDrivers.find(d => d.id === t.receiverId);
+        const rName    = t.receiverName || receiver?.name || '?';
+        const car      = receiver?.car || '';
+        const initials = rName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+        const isClosed = t.status !== 'Создан';
+
+        const statusMap = {
+          'Создан':         ['wait', '⏳ Ожидает подтверждения'],
+          'Подтверждён':    ['ok',   '✓ Подтверждено'],
+          'Скорректирован': ['adj',  `✏️ Скорректировано: ${t.litersFinal} л`],
+          'Отклонён':       ['rej',  '✕ Отклонено'],
+        };
+        const [cls, label] = statusMap[t.status] || ['rej', t.status];
+
+        const card = document.createElement('div');
+        card.className = 'trf-card' + (isClosed ? ' closed' : '');
+        card.style.animationDelay = (idx * 0.05) + 's';
+
+        card.innerHTML = `
+          <div class="trf-head">
+            <div class="trf-avatar out">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div class="trf-sender-name">${rName}</div>
+              ${car ? `<div class="trf-sender-car">🚛 ${car}</div>` : ''}
+            </div>
+            <div class="trf-amount-block">
+              <div class="trf-liters" style="color:var(--green)">${t.litersClaimed}</div>
+              <div class="trf-liters-unit">литров</div>
+            </div>
+          </div>
+          <div class="trf-meta">
+            <span>📅 ${t.transferDate || '—'}</span>
+            <span>🕐 ${(t.createdAt || '—').slice(0, 16)}</span>
+          </div>
+          <div class="trf-closed-status ${cls}">${label}</div>`;
+
+        list.appendChild(card);
+      });
+    } catch (e) {
+      list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-title">Ошибка загрузки</div></div>`;
+      logError('loadOutgoing', e.message);
+    }
+  }
+
+  // ── KEYBOARD FIX (visualViewport) ────────────────────────
+  function scrollToField(el) {
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', _onViewportResize);
+    window.visualViewport.addEventListener('scroll', _onViewportResize);
+  }
+
+  function _onViewportResize() {
+    const wrap = document.getElementById('submit-wrap');
+    if (!wrap || wrap.classList.contains('hidden')) return;
+    const vp      = window.visualViewport;
+    const kbdH    = window.innerHeight - vp.offsetTop - vp.height;
+    wrap.style.transform = kbdH > 0 ? `translateY(-${kbdH}px)` : '';
+  }
+
+  // ── UTILS ─────────────────────────────────────────────────
+  function _lock(card, state) {
+    card?.querySelectorAll('button, input').forEach(el => el.disabled = state);
+  }
 
   async function logError(context, message) {
     try {
-      await fetch(API_URL,{method:'POST',body:JSON.stringify({
-        action:'logError', context, message,
-        user:currentDriver?.name||tgUsername||'unknown',
-        ts:new Date().toISOString()
+      await fetch(API_URL, { method: 'POST', body: JSON.stringify({
+        action: 'logError', context, message,
+        user: currentDriver?.name || tgUsername || 'unknown',
+        ts: new Date().toISOString(),
       })});
     } catch {}
   }
 
   init();
-
-  // Фикс клавиатуры на iOS: скроллим активный элемент в видимую область
-  function _onViewportResize() {
-    const el = document.activeElement;
-    if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT')) {
-      setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
-    }
-  }
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', _onViewportResize);
-  } else {
-    window.addEventListener('resize', _onViewportResize);
-  }
-  // Также при фокусе напрямую
-  document.addEventListener('focusin', e => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
-      setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
-    }
-  });
 </script>
 
 </body>
