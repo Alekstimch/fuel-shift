@@ -159,6 +159,12 @@
       o.textContent = d.name + (d.car ? ', ' + d.car : '');
       sel.appendChild(o);
     });
+
+    // Если открыто по deeplink из уведомления — сразу показываем входящие
+    const startParam = tg?.initDataUnsafe?.start_param || '';
+    if (startParam) {
+      switchTab('confirm');
+    }
   }
 
   function showAuthError(msg) {
