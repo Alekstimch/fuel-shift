@@ -848,7 +848,7 @@
       const res = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id), { redirect: 'follow' });
       const items = await res.json();
       if (!Array.isArray(items)) return;
-      const pending = items.filter(t => t.status === 'Создан').length;
+      const pending = items.filter(t => t.status === 'Создана').length;
       const badge = document.getElementById('pending-badge');
       if (pending > 0) { badge.textContent = pending; badge.classList.add('show'); }
     } catch {}
@@ -881,7 +881,7 @@
         const senderName = sender ? sender.name : (t.senderId || '?');
         const initials = senderName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
         const car = t.senderCar || sender?.car || '';
-        const isPending = t.status === 'Создан';
+          const isPending = t.status === 'Создана';
 
         const card = document.createElement('div');
         card.className = 'trf-card' + (isPending ? '' : ' closed');
@@ -903,9 +903,9 @@
             </div>`;
         } else {
           const statusMap = {
-            'Подтверждён':    ['ok',  '✓ Подтверждено'],
-            'Скорректирован': ['adj', `✏️ Скорректировано: ${t.litersFinal} л`],
-            'Отклонён':       ['rej', '✕ Отклонено'],
+            'Подтверждена':    ['ok',  '✓ Подтверждено'],
+            'Скорректирована': ['adj', `✏️ Скорректировано: ${t.litersFinal} л`],
+            'Отклонена':       ['rej', '✕ Отклонено'],
           };
           const [cls, label] = statusMap[t.status] || ['rej', t.status];
           actionsHtml = `<div class="trf-closed-status ${cls}">${label}</div>`;
@@ -919,7 +919,7 @@
               ${car ? `<div class="trf-sender-car">${car}</div>` : ''}
             </div>
             <div class="trf-amount-block">
-              <div class="trf-liters ${isPending ? 'liters-pending' : (t.status === 'Подтверждён' ? 'liters-ok' : t.status === 'Отклонён' ? 'liters-rej' : 'liters-adj')}">${t.litersClaimed}</div>
+              <div class="trf-liters ${isPending ? 'liters-pending' : (t.status === 'Подтверждена' ? 'liters-ok' : t.status === 'Отклонена' ? 'liters-rej' : 'liters-adj')}">${t.litersClaimed}</div>
               <div class="trf-liters-unit">литров</div>
             </div>
           </div>
@@ -1059,13 +1059,13 @@
         const car = receiver?.car || '';
 
         const statusMap = {
-          'Создан':         ['wait', '⏳ Ожидает подтверждения'],
-          'Подтверждён':    ['ok',   '✓ Подтверждено'],
-          'Скорректирован': ['adj',  `✏️ Скорректировано: ${t.litersFinal} л`],
-          'Отклонён':       ['rej',  '✕ Отклонено'],
+          'Создана':         ['wait', '⏳ Ожидает подтверждения'],
+          'Подтверждена':    ['ok',   '✓ Подтверждено'],
+          'Скорректирована': ['adj',  `✏️ Скорректировано: ${t.litersFinal} л`],
+          'Отклонена':       ['rej',  '✕ Отклонено'],
         };
         const [cls, label] = statusMap[t.status] || ['rej', t.status];
-        const isClosed = t.status !== 'Создан';
+        const isClosed = t.status !== 'Создана';
 
         const card = document.createElement('div');
         card.className = 'trf-card' + (isClosed ? ' closed' : '');
