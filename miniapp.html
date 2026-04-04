@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <title>Переливы топлива</title>
-  <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=8Fvt2LObN0a6gF1J0tVvcWddA0pCQ6jp_h5AJ1pTQHg1STbHsI-MC0FolaraB6tAuFyTAWBTAnQCFj_EPtJk7hwKnNshpyLKz0k3Qkm3snSM-OYBXItrDT9gi70vJPvg7T5JOQ0FUKNWJNCWoL0dzj8wQtpm-pFmogqn-8PEButI2cP9oIZYN2iRiAZJEfQcBzeyYfnUTzRrvf4uGQ8S3t620c0JtBxz8voB4Q94JogmSd87OdeNxzQ2f_6Xf8cj1UGaPvC-d0HTnCNsBr0osQ" charset="UTF-8"></script><script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -42,18 +42,12 @@
       overflow-x: hidden;
     }
 
-    /* ── CREATE FORM LAYOUT ───────────────────────────── */
+    /* ── ФИКС КЛАВИАТУРЫ ─────────────────────────────── */
     #screen-create {
-      padding-bottom: 16px;
+      padding-bottom: 24px;
     }
     .create-submit-wrap {
-      position: static;
-      padding: 0;
-      margin-top: 22px;
-      background: transparent;
-      z-index: auto;
-      will-change: auto;
-      transition: none;
+      padding: 8px 0 0;
     }
     .create-submit-wrap.hidden { display: none; }
 
@@ -292,20 +286,19 @@
     /* ── TABS ─────────────────────────────────────── */
     .tabs {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: 1fr 1fr 1fr;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       margin-bottom: 16px;
     }
 
     .tab-btn {
-      min-width: 0;
-      padding: 12px 6px;
+      padding: 11px 4px;
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
       color: var(--text2);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       font-family: var(--sans);
       cursor: pointer;
@@ -347,31 +340,6 @@
       text-transform: uppercase;
       letter-spacing: .8px;
       margin-bottom: 8px;
-    }
-
-    .select-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-
-    .select-title::before,
-    .select-title::after {
-      content: "";
-      flex: 1;
-      min-width: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border), transparent);
-    }
-
-    .select-title-text {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: .8px;
-      white-space: nowrap;
     }
 
     select, input[type="number"], input[type="date"] {
@@ -639,19 +607,16 @@
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('create')" id="tab-create">Создать</button>
-    <button class="tab-btn" onclick="switchTab('confirm')" id="tab-confirm">
+    <button class="tab-btn"        onclick="switchTab('confirm')" id="tab-confirm">
       Входящие
       <span class="tab-badge" id="pending-badge"></span>
     </button>
-    <button class="tab-btn" onclick="switchTab('outgoing')" id="tab-outgoing">Мои</button>
+    <button class="tab-btn"        onclick="switchTab('outgoing')" id="tab-outgoing">Мои</button>
   </div>
 
   <!-- CREATE -->
   <div class="screen active" id="screen-create">
     <div class="form-section fu1">
-      <div class="select-title">
-        <span class="select-title-text">Выберите водителя</span>
-      </div>
       <label class="field-label">Кому переливаете</label>
       <select id="receiver" onchange="onReceiverChange()">
         <option value="">Выберите водителя</option>
@@ -671,10 +636,10 @@
 
     <div class="form-section fu3">
       <label class="field-label">Дата перелива</label>
-      <input type="date" id="date-create" onfocus="scrollToField(this)">
+      <input type="date" id="date-create">
     </div>
 
-    <div class="create-submit-wrap fu4" id="create-submit-wrap">
+    <div class="create-submit-wrap" id="create-submit-wrap">
       <button class="btn-primary" id="btn-send" onclick="submitCreate()">
         <span id="btn-send-text">Отправить заявку</span>
       </button>
@@ -778,22 +743,11 @@
     }
   }
 
-  // ── KEYBOARD / SCROLL FIX ───────────────────────────────
+  // ── KEYBOARD FIX ─────────────────────────────────────────
   function scrollToField(el) {
-    const vv = window.visualViewport;
-    const delay = /Android/i.test(navigator.userAgent) ? 320 : 220;
-
     setTimeout(() => {
-      const rect = el.getBoundingClientRect();
-      const visibleHeight = vv ? vv.height : window.innerHeight;
-      const targetTop = Math.max(16, visibleHeight * 0.22);
-      const delta = rect.top - targetTop;
-
-      window.scrollTo({
-        top: Math.max(0, window.scrollY + delta),
-        behavior: 'smooth'
-      });
-    }, delay);
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
   }
 
   // ── TABS ─────────────────────────────────────────────────
@@ -805,6 +759,7 @@
     document.getElementById('screen-create').classList.toggle('active',   tab === 'create');
     document.getElementById('screen-confirm').classList.toggle('active',  tab === 'confirm');
     document.getElementById('screen-outgoing').classList.toggle('active', tab === 'outgoing');
+    document.getElementById('create-submit-wrap').classList.toggle('hidden', tab !== 'create');
     if (tab === 'confirm')  loadIncoming();
     if (tab === 'outgoing') loadOutgoing();
   }
