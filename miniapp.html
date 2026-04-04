@@ -42,10 +42,11 @@
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
       overflow-x: hidden;
-      -webkit-user-select: none;
-      user-select: none;
     }
-    input, textarea, select { -webkit-user-select: text; user-select: text; }
+    @media (min-width: 600px) {
+      body { display: flex; justify-content: center; }
+      #auth-screen, #status-screen, #main-screen { width: 100%; max-width: 480px; }
+    }
 
     /* ── ФИКС КЛАВИАТУРЫ ─────────────────────────────── */
     #screen-create {
@@ -273,15 +274,6 @@
     /* ── MAIN ─────────────────────────────────────── */
     #main-screen { display: none; }
 
-    /* десктоп — ограничение ширины */
-    @media (min-width: 600px) {
-      body { display: flex; justify-content: center; }
-      #auth-screen, #status-screen, #main-screen {
-        width: 100%;
-        max-width: 480px;
-      }
-    }
-
     .app-header {
       padding: 16px 16px 0;
       display: flex;
@@ -393,15 +385,14 @@
       border: 1.5px solid var(--border);
       border-radius: var(--radius);
       color: var(--text);
-      font-size: 16px; /* минимум 16px чтобы iOS не зумил при фокусе */
+      font-size: 16px;
       font-family: var(--sans);
       -webkit-appearance: none;
       transition: border-color .15s;
     }
+    input[type="date"] { color-scheme: dark; }
     select:focus, input:focus { outline: none; border-color: var(--accent); }
     select option { background: #161b22; }
-    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .5; }
-    input[type="date"] { color-scheme: dark; }
 
     input[type="number"], #liters-create {
       font-family: var(--mono);
@@ -420,6 +411,7 @@
       padding-left: 2px;
     }
 
+    /* машина под селектом — без дублирования имени */
     .car-hint {
       display: none;
       align-items: center;
@@ -461,7 +453,11 @@
       overflow: hidden;
       animation: fadeUp .22s ease both;
     }
-    .trf-card.closed { opacity: .6; border-style: dashed; }
+    .trf-card.closed { opacity: .45; border-style: dashed; }
+    .liters-pending { color: var(--text); }
+    .liters-ok      { color: var(--green); }
+    .liters-rej     { color: var(--red); }
+    .liters-adj     { color: var(--yellow); }
 
     .trf-head {
       padding: 14px 14px 12px;
@@ -486,7 +482,7 @@
       flex-shrink: 0;
     }
 
-    .trf-sender-name { font-size: 16px; font-weight: 700; line-height: 1.2; margin-bottom: 3px; }
+    .trf-sender-name { font-size: 16px; font-weight: 700; line-height: 1.2; margin-bottom: 3px; color: var(--text); }
     .trf-sender-car  { font-size: 12px; color: var(--text2); }
 
     .trf-amount-block { margin-left: auto; text-align: right; flex-shrink: 0; }
@@ -513,8 +509,7 @@
 
     .trf-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-    .btn-confirm, .btn-reject, .btn-adjust-save,
-    .btn-reject-yes, .btn-reject-no {
+    .btn-confirm, .btn-reject, .btn-adjust-save {
       padding: 11px;
       border-radius: var(--radius-sm);
       font-size: 13px;
@@ -530,11 +525,11 @@
     .btn-confirm:active, .btn-reject:active, .btn-adjust-save:active { opacity: .8; transform: scale(.97); }
     button:disabled { opacity: .4 !important; cursor: not-allowed !important; }
 
-    .btn-confirm  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
-    .btn-reject   { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(248,81,73,.3); }
+    .btn-confirm     { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+    .btn-reject      { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(248,81,73,.3); }
     .btn-adjust-save { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); }
 
-    /* adjust row — grid 1fr 1fr, кнопка строго под Отклонить */
+    /* adjust row — grid, всегда виден */
     .adjust-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -542,8 +537,7 @@
       align-items: center;
     }
     .adjust-row input {
-      margin: 0;
-      padding: 11px 12px;
+      padding: 10px 12px;
       font-size: 14px;
       font-family: var(--mono);
       font-weight: 500;
@@ -707,31 +701,12 @@
 
   let currentDriver = null, allDrivers = [], lastTab = 'create';
 
-  // ── API ВРАППЕР (фикс Android/iOS редиректов Apps Script) ──
-  async function apiGet(params) {
-    const url = new URL(API_URL);
-    Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
-    const res = await fetch(url.toString(), {
-      method: 'GET',
-      redirect: 'follow',
-    });
-    return res.json();
-  }
-
-  async function apiPost(body) {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      redirect: 'follow',
-      body: JSON.stringify(body),
-    });
-    return res.json();
-  }
-
   // ── INIT ─────────────────────────────────────────────────
   async function init() {
     document.getElementById('date-create').valueAsDate = new Date();
     try {
-      allDrivers = await apiGet({ action: 'getDrivers' });
+      const res = await fetch(API_URL + '?action=getDrivers', { redirect: 'follow' });
+      allDrivers = await res.json();
       if (!Array.isArray(allDrivers)) throw new Error('Некорректный ответ сервера');
     } catch (e) {
       showAuthError('Не удалось подключиться к серверу.<br>Попробуйте позже или обратитесь к диспетчеру.');
@@ -813,6 +788,7 @@
     document.getElementById('screen-create').classList.toggle('active',   tab === 'create');
     document.getElementById('screen-confirm').classList.toggle('active',  tab === 'confirm');
     document.getElementById('screen-outgoing').classList.toggle('active', tab === 'outgoing');
+    // Кнопка отправки — только на вкладке создания
     document.getElementById('create-submit-wrap').classList.toggle('hidden', tab !== 'create');
     if (tab === 'confirm')  loadIncoming();
     if (tab === 'outgoing') loadOutgoing();
@@ -834,12 +810,17 @@
     txt.textContent = 'Отправка…';
 
     try {
-      const data = await apiPost({
-        action: 'createTransfer',
-        senderId: currentDriver.id,
-        senderName: currentDriver.name,
-        receiverId, liters: +liters, date,
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({
+          action: 'createTransfer',
+          senderId: currentDriver.id,
+          senderName: currentDriver.name,
+          receiverId, liters: +liters, date,
+        }),
       });
+      const data = await res.json();
       if (data.ok) {
         const recv = allDrivers.find(d => d.id === receiverId);
         showStatus({
@@ -861,19 +842,15 @@
     }
   }
 
-  // ── INCOMING COUNT (бейдж) ────────────────────────────────
+  // ── BADGE (incoming count) ────────────────────────────────
   async function loadIncomingCount() {
     try {
-      const items = await apiGet({ action: 'getTransfers', driverId: currentDriver.id });
+      const res = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id), { redirect: 'follow' });
+      const items = await res.json();
       if (!Array.isArray(items)) return;
       const pending = items.filter(t => t.status === 'Создан').length;
       const badge = document.getElementById('pending-badge');
-      if (pending > 0) {
-        badge.textContent = pending;
-        badge.classList.add('show');
-      } else {
-        badge.classList.remove('show');
-      }
+      if (pending > 0) { badge.textContent = pending; badge.classList.add('show'); }
     } catch {}
   }
 
@@ -882,40 +859,42 @@
     const list = document.getElementById('confirm-list');
     list.innerHTML = `<div class="list-spinner"><div class="spinner"></div>Загрузка…</div>`;
     try {
-      const items = await apiGet({ action: 'getTransfers', driverId: currentDriver.id });
+      const res = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id), { redirect: 'follow' });
+      const items = await res.json();
 
       if (!Array.isArray(items) || !items.length) {
         list.innerHTML = `
           <div class="empty-state">
-            <span class="empty-state-icon">📭</span>
+            <span class="empty-state-icon">✅</span>
             <div class="empty-state-title">Входящих нет</div>
-            <div class="empty-state-sub">Здесь появятся переливы, которые вам отправили другие водители</div>
+            <div class="empty-state-sub">Если вам передавали топливо — попросите водителя создать заявку в приложении</div>
           </div>`;
         return;
       }
 
-      // сортировка от новых к старым
-      const sorted = [...items].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
+      document.getElementById('pending-badge').classList.remove('show');
       list.innerHTML = '';
+
+      const sorted = [...items].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       sorted.forEach((t, idx) => {
         const sender = allDrivers.find(d => d.id === t.senderId);
-        const senderName = t.senderName || (sender ? sender.name : '?');
+        const senderName = sender ? sender.name : (t.senderId || '?');
         const initials = senderName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
-        const car = sender?.car || '';
+        const car = t.senderCar || sender?.car || '';
+        const isPending = t.status === 'Создан';
 
         const card = document.createElement('div');
-        card.className = 'trf-card' + (t.status !== 'Создан' ? ' closed' : '');
+        card.className = 'trf-card' + (isPending ? '' : ' closed');
         card.id = 'trf-' + t.id;
         card.style.animationDelay = (idx * 0.05) + 's';
 
         let actionsHtml = '';
-        if (t.status === 'Создан') {
+        if (isPending) {
           actionsHtml = `
             <div class="trf-actions">
               <div class="trf-btn-row">
-                <button class="btn-confirm" onclick="respond('${t.id}', 'confirm')">✓ Подтвердить</button>
-                <button class="btn-reject"  onclick="respond('${t.id}', 'reject')">✕ Отклонить</button>
+                <button class="btn-confirm"        onclick="respond('${t.id}','confirm',this)">✓ Подтвердить</button>
+                <button class="btn-reject" onclick="respond('${t.id}','reject',this)">✕ Отклонить</button>
               </div>
               <div class="adjust-row">
                 <input type="number" id="adj-${t.id}" placeholder="Другой объём, л" min="1" step="1" inputmode="numeric">
@@ -937,10 +916,10 @@
             <div class="trf-avatar">${initials}</div>
             <div style="flex:1;min-width:0">
               <div class="trf-sender-name">${senderName}</div>
-              ${car ? `<div class="trf-sender-car">🚛 ${car}</div>` : ''}
+              ${car ? `<div class="trf-sender-car">${car}</div>` : ''}
             </div>
             <div class="trf-amount-block">
-              <div class="trf-liters">${t.litersClaimed}</div>
+              <div class="trf-liters ${isPending ? 'liters-pending' : (t.status === 'Подтверждён' ? 'liters-ok' : t.status === 'Отклонён' ? 'liters-rej' : 'liters-adj')}">${t.litersClaimed}</div>
               <div class="trf-liters-unit">литров</div>
             </div>
           </div>
@@ -964,15 +943,15 @@
   }
 
   // ── RESPOND ──────────────────────────────────────────────
-  async function respond(id, responseType) {
+  async function respond(id, responseType, _btn) {
     _lockCard(id, true);
     try {
-      const data = await apiPost({
-        action: 'respondTransfer',
-        id,
-        responseType,
-        responderName: currentDriver.name,
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({ action: 'respondTransfer', id, responseType, responderName: currentDriver.name }),
       });
+      const data = await res.json();
       if (data.ok) {
         lastTab = 'confirm';
         const m = responseType === 'confirm'
@@ -996,13 +975,12 @@
     if (!liters || +liters <= 0) return showStatus({ ok: false, title: 'Введите объём' });
     _lockCard(id, true);
     try {
-      const data = await apiPost({
-        action: 'respondTransfer',
-        id,
-        responseType: 'adjust',
-        liters: +liters,
-        responderName: currentDriver.name,
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({ action: 'respondTransfer', id, responseType: 'adjust', liters: +liters, responderName: currentDriver.name }),
       });
+      const data = await res.json();
       if (data.ok) {
         lastTab = 'confirm';
         showStatus({ ok: true, title: 'Скорректировано', sub: `Принято ${liters} л вместо заявленного объёма` });
@@ -1059,7 +1037,8 @@
     const list = document.getElementById('outgoing-list');
     list.innerHTML = `<div class="list-spinner"><div class="spinner"></div>Загрузка…</div>`;
     try {
-      const items = await apiGet({ action: 'getOutgoingTransfers', driverId: currentDriver.id });
+      const res = await fetch(API_URL + '?action=getOutgoingTransfers&driverId=' + encodeURIComponent(currentDriver.id), { redirect: 'follow' });
+      const items = await res.json();
 
       if (!Array.isArray(items) || !items.length) {
         list.innerHTML = `
@@ -1097,7 +1076,7 @@
             <div class="trf-avatar out">${initials}</div>
             <div style="flex:1;min-width:0">
               <div class="trf-sender-name">${receiverName}</div>
-              ${car ? `<div class="trf-sender-car">🚛 ${car}</div>` : ''}
+              ${car ? `<div class="trf-sender-car">${car}</div>` : ''}
             </div>
             <div class="trf-amount-block">
               <div class="trf-liters" style="color:var(--green)">${t.litersClaimed}</div>
@@ -1126,10 +1105,13 @@
   // ── LOG ERROR ─────────────────────────────────────────────
   async function logError(context, message) {
     try {
-      await apiPost({
-        action: 'logError', context, message,
-        user: currentDriver?.name || tgUsername || 'unknown',
-        ts: new Date().toISOString(),
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'logError', context, message,
+          user: currentDriver?.name || tgUsername || 'unknown',
+          ts: new Date().toISOString(),
+        }),
       });
     } catch {}
   }
