@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>Переливы топлива</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,9 +38,14 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding-bottom: 56px;
+      padding-bottom: max(56px, calc(56px + env(safe-area-inset-bottom)));
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
       overflow-x: hidden;
+      -webkit-user-select: none;
+      user-select: none;
     }
+    input, textarea, select { -webkit-user-select: text; user-select: text; }
 
     /* ── ФИКС КЛАВИАТУРЫ ─────────────────────────────── */
     #screen-create {
@@ -268,6 +273,15 @@
     /* ── MAIN ─────────────────────────────────────── */
     #main-screen { display: none; }
 
+    /* десктоп — ограничение ширины */
+    @media (min-width: 600px) {
+      body { display: flex; justify-content: center; }
+      #auth-screen, #status-screen, #main-screen {
+        width: 100%;
+        max-width: 480px;
+      }
+    }
+
     .app-header {
       padding: 16px 16px 0;
       display: flex;
@@ -379,13 +393,15 @@
       border: 1.5px solid var(--border);
       border-radius: var(--radius);
       color: var(--text);
-      font-size: 15px;
+      font-size: 16px; /* минимум 16px чтобы iOS не зумил при фокусе */
       font-family: var(--sans);
       -webkit-appearance: none;
       transition: border-color .15s;
     }
     select:focus, input:focus { outline: none; border-color: var(--accent); }
     select option { background: #161b22; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .5; }
+    input[type="date"] { color-scheme: dark; }
 
     input[type="number"], #liters-create {
       font-family: var(--mono);
@@ -404,7 +420,6 @@
       padding-left: 2px;
     }
 
-    /* машина под селектом — без дублирования имени */
     .car-hint {
       display: none;
       align-items: center;
@@ -498,7 +513,7 @@
 
     .trf-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-    .btn-confirm, .btn-reject-trigger, .btn-adjust-toggle, .btn-adjust-save,
+    .btn-confirm, .btn-reject, .btn-adjust-save,
     .btn-reject-yes, .btn-reject-no {
       padding: 11px;
       border-radius: var(--radius-sm);
@@ -512,48 +527,26 @@
       gap: 5px;
       transition: opacity .15s, transform .1s;
     }
-    .btn-confirm:active, .btn-reject-trigger:active,
-    .btn-adjust-toggle:active, .btn-adjust-save:active { opacity: .8; transform: scale(.97); }
+    .btn-confirm:active, .btn-reject:active, .btn-adjust-save:active { opacity: .8; transform: scale(.97); }
     button:disabled { opacity: .4 !important; cursor: not-allowed !important; }
 
-    .btn-confirm        { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
-    .btn-reject-trigger { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-    .btn-adjust-toggle  { background: transparent; color: var(--text3); border: 1px solid var(--border2); font-size: 12px; }
-    .btn-adjust-save    { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); flex-shrink: 0; padding: 11px 14px; }
+    .btn-confirm  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+    .btn-reject   { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(248,81,73,.3); }
+    .btn-adjust-save { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); }
 
-    /* reject confirm inline */
-    .reject-confirm {
-      display: none;
-      background: var(--red-dim);
-      border: 1px solid rgba(248,81,73,.25);
-      border-radius: var(--radius-sm);
-      padding: 12px;
-      flex-direction: column;
-      gap: 8px;
-      animation: fadeIn .2s ease both;
-    }
-    .reject-confirm.show { display: flex; }
-    .reject-confirm-text { font-size: 13px; color: #ffa8a3; font-weight: 500; line-height: 1.4; }
-    .reject-confirm-row  { display: flex; gap: 8px; }
-
-    .btn-reject-yes { flex: 1; background: var(--red); color: #fff; border: none; }
-    .btn-reject-no  { flex: 1; background: transparent; color: var(--text2); border: 1px solid var(--border); font-weight: 600; }
-
-    /* adjust row */
+    /* adjust row — grid 1fr 1fr, кнопка строго под Отклонить */
     .adjust-row {
-      display: none;
-      align-items: center;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
-      animation: fadeIn .2s ease both;
+      align-items: center;
     }
-    .adjust-row.show { display: flex; }
     .adjust-row input {
-      flex: 1;
       margin: 0;
       padding: 11px 12px;
-      font-size: 16px;
+      font-size: 14px;
       font-family: var(--mono);
-      font-weight: 600;
+      font-weight: 500;
     }
 
     /* closed status */
@@ -714,12 +707,31 @@
 
   let currentDriver = null, allDrivers = [], lastTab = 'create';
 
+  // ── API ВРАППЕР (фикс Android/iOS редиректов Apps Script) ──
+  async function apiGet(params) {
+    const url = new URL(API_URL);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+    });
+    return res.json();
+  }
+
+  async function apiPost(body) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+
   // ── INIT ─────────────────────────────────────────────────
   async function init() {
     document.getElementById('date-create').valueAsDate = new Date();
     try {
-      const res = await fetch(API_URL + '?action=getDrivers');
-      allDrivers = await res.json();
+      allDrivers = await apiGet({ action: 'getDrivers' });
       if (!Array.isArray(allDrivers)) throw new Error('Некорректный ответ сервера');
     } catch (e) {
       showAuthError('Не удалось подключиться к серверу.<br>Попробуйте позже или обратитесь к диспетчеру.');
@@ -801,7 +813,6 @@
     document.getElementById('screen-create').classList.toggle('active',   tab === 'create');
     document.getElementById('screen-confirm').classList.toggle('active',  tab === 'confirm');
     document.getElementById('screen-outgoing').classList.toggle('active', tab === 'outgoing');
-    // Кнопка отправки — только на вкладке создания
     document.getElementById('create-submit-wrap').classList.toggle('hidden', tab !== 'create');
     if (tab === 'confirm')  loadIncoming();
     if (tab === 'outgoing') loadOutgoing();
@@ -823,16 +834,12 @@
     txt.textContent = 'Отправка…';
 
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'createTransfer',
-          senderId: currentDriver.id,
-          senderName: currentDriver.name,
-          receiverId, liters: +liters, date,
-        }),
+      const data = await apiPost({
+        action: 'createTransfer',
+        senderId: currentDriver.id,
+        senderName: currentDriver.name,
+        receiverId, liters: +liters, date,
       });
-      const data = await res.json();
       if (data.ok) {
         const recv = allDrivers.find(d => d.id === receiverId);
         showStatus({
@@ -854,15 +861,19 @@
     }
   }
 
-  // ── BADGE (incoming count) ────────────────────────────────
+  // ── INCOMING COUNT (бейдж) ────────────────────────────────
   async function loadIncomingCount() {
     try {
-      const res = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id));
-      const items = await res.json();
+      const items = await apiGet({ action: 'getTransfers', driverId: currentDriver.id });
       if (!Array.isArray(items)) return;
       const pending = items.filter(t => t.status === 'Создан').length;
       const badge = document.getElementById('pending-badge');
-      if (pending > 0) { badge.textContent = pending; badge.classList.add('show'); }
+      if (pending > 0) {
+        badge.textContent = pending;
+        badge.classList.add('show');
+      } else {
+        badge.classList.remove('show');
+      }
     } catch {}
   }
 
@@ -871,53 +882,44 @@
     const list = document.getElementById('confirm-list');
     list.innerHTML = `<div class="list-spinner"><div class="spinner"></div>Загрузка…</div>`;
     try {
-      const res = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id));
-      const items = await res.json();
+      const items = await apiGet({ action: 'getTransfers', driverId: currentDriver.id });
 
       if (!Array.isArray(items) || !items.length) {
         list.innerHTML = `
           <div class="empty-state">
-            <span class="empty-state-icon">✅</span>
+            <span class="empty-state-icon">📭</span>
             <div class="empty-state-title">Входящих нет</div>
-            <div class="empty-state-sub">Если вам передавали топливо — попросите водителя создать заявку в приложении</div>
+            <div class="empty-state-sub">Здесь появятся переливы, которые вам отправили другие водители</div>
           </div>`;
         return;
       }
 
-      document.getElementById('pending-badge').classList.remove('show');
-      list.innerHTML = '';
+      // сортировка от новых к старым
+      const sorted = [...items].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
-      items.forEach((t, idx) => {
+      list.innerHTML = '';
+      sorted.forEach((t, idx) => {
         const sender = allDrivers.find(d => d.id === t.senderId);
-        const senderName = sender ? sender.name : (t.senderId || '?');
+        const senderName = t.senderName || (sender ? sender.name : '?');
         const initials = senderName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
-        const car = t.senderCar || sender?.car || '';
-        const isPending = t.status === 'Создан';
+        const car = sender?.car || '';
 
         const card = document.createElement('div');
-        card.className = 'trf-card' + (isPending ? '' : ' closed');
+        card.className = 'trf-card' + (t.status !== 'Создан' ? ' closed' : '');
         card.id = 'trf-' + t.id;
         card.style.animationDelay = (idx * 0.05) + 's';
 
         let actionsHtml = '';
-        if (isPending) {
+        if (t.status === 'Создан') {
           actionsHtml = `
             <div class="trf-actions">
               <div class="trf-btn-row">
-                <button class="btn-confirm"        onclick="respond('${t.id}','confirm',this)">✓ Подтвердить</button>
-                <button class="btn-reject-trigger" onclick="showRejectConfirm('${t.id}')">✕ Отклонить</button>
+                <button class="btn-confirm" onclick="respond('${t.id}', 'confirm')">✓ Подтвердить</button>
+                <button class="btn-reject"  onclick="respond('${t.id}', 'reject')">✕ Отклонить</button>
               </div>
-              <div class="reject-confirm" id="reject-confirm-${t.id}">
-                <div class="reject-confirm-text">Точно отклонить? Перелив не попадёт в учёт.</div>
-                <div class="reject-confirm-row">
-                  <button class="btn-reject-yes" onclick="respond('${t.id}','reject',this)">Да, отклонить</button>
-                  <button class="btn-reject-no"  onclick="hideRejectConfirm('${t.id}')">Отмена</button>
-                </div>
-              </div>
-              <button class="btn-adjust-toggle" onclick="toggleAdjust('${t.id}')">✏️ Указать другой объём</button>
-              <div class="adjust-row" id="adjust-row-${t.id}">
-                <input type="number" id="adj-${t.id}" placeholder="Объём, л" min="1" step="1">
-                <button class="btn-adjust-save" onclick="respondAdjust('${t.id}')">Сохранить</button>
+              <div class="adjust-row">
+                <input type="number" id="adj-${t.id}" placeholder="Другой объём, л" min="1" step="1" inputmode="numeric">
+                <button class="btn-adjust-save" onclick="respondAdjust('${t.id}')">Изменить</button>
               </div>
             </div>`;
         } else {
@@ -961,26 +963,16 @@
     }
   }
 
-  // ── REJECT INLINE ─────────────────────────────────────────
-  function showRejectConfirm(id) { document.getElementById('reject-confirm-' + id)?.classList.add('show'); }
-  function hideRejectConfirm(id) { document.getElementById('reject-confirm-' + id)?.classList.remove('show'); }
-
-  // ── ADJUST TOGGLE ─────────────────────────────────────────
-  function toggleAdjust(id) {
-    const row = document.getElementById('adjust-row-' + id);
-    row?.classList.toggle('show');
-    if (row?.classList.contains('show')) document.getElementById('adj-' + id)?.focus();
-  }
-
   // ── RESPOND ──────────────────────────────────────────────
   async function respond(id, responseType) {
     _lockCard(id, true);
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'respondTransfer', id, responseType, responderName: currentDriver.name }),
+      const data = await apiPost({
+        action: 'respondTransfer',
+        id,
+        responseType,
+        responderName: currentDriver.name,
       });
-      const data = await res.json();
       if (data.ok) {
         lastTab = 'confirm';
         const m = responseType === 'confirm'
@@ -1004,11 +996,13 @@
     if (!liters || +liters <= 0) return showStatus({ ok: false, title: 'Введите объём' });
     _lockCard(id, true);
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'respondTransfer', id, responseType: 'adjust', liters: +liters, responderName: currentDriver.name }),
+      const data = await apiPost({
+        action: 'respondTransfer',
+        id,
+        responseType: 'adjust',
+        liters: +liters,
+        responderName: currentDriver.name,
       });
-      const data = await res.json();
       if (data.ok) {
         lastTab = 'confirm';
         showStatus({ ok: true, title: 'Скорректировано', sub: `Принято ${liters} л вместо заявленного объёма` });
@@ -1065,8 +1059,7 @@
     const list = document.getElementById('outgoing-list');
     list.innerHTML = `<div class="list-spinner"><div class="spinner"></div>Загрузка…</div>`;
     try {
-      const res = await fetch(API_URL + '?action=getOutgoingTransfers&driverId=' + encodeURIComponent(currentDriver.id));
-      const items = await res.json();
+      const items = await apiGet({ action: 'getOutgoingTransfers', driverId: currentDriver.id });
 
       if (!Array.isArray(items) || !items.length) {
         list.innerHTML = `
@@ -1078,8 +1071,9 @@
         return;
       }
 
+      const sortedOut = [...items].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       list.innerHTML = '';
-      items.forEach((t, idx) => {
+      sortedOut.forEach((t, idx) => {
         const receiver = allDrivers.find(d => d.id === t.receiverId);
         const receiverName = t.receiverName || (receiver ? receiver.name : '?');
         const initials = receiverName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
@@ -1132,13 +1126,10 @@
   // ── LOG ERROR ─────────────────────────────────────────────
   async function logError(context, message) {
     try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'logError', context, message,
-          user: currentDriver?.name || tgUsername || 'unknown',
-          ts: new Date().toISOString(),
-        }),
+      await apiPost({
+        action: 'logError', context, message,
+        user: currentDriver?.name || tgUsername || 'unknown',
+        ts: new Date().toISOString(),
       });
     } catch {}
   }
