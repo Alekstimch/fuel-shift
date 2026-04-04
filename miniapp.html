@@ -666,7 +666,9 @@
     <div class="form-section fu2">
       <label class="field-label">Количество литров</label>
       <input type="number" id="liters-create" placeholder="0" min="1" max="2000" step="1"
-             onfocus="scrollToField(this)">
+             enterkeyhint="next" inputmode="numeric"
+             onfocus="scrollToField(this)"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('date-create').focus();scrollToField(document.getElementById('date-create'))}">
       <div class="field-hint">Обычно от 30 до 300 л</div>
     </div>
 
