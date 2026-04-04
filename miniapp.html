@@ -372,7 +372,7 @@
       margin-bottom: 8px;
     }
 
-    select, input[type="number"], input[type="date"] {
+    select, input[type="number"], input[type="text"], input[type="date"] {
       width: 100%;
       padding: 13px 14px;
       background: var(--surface);
@@ -387,10 +387,14 @@
     select:focus, input:focus { outline: none; border-color: var(--accent); }
     select option { background: #161b22; }
 
-    input[type="number"] {
+    input[type="number"], #liters-create {
       font-family: var(--mono);
       font-size: 22px;
       font-weight: 600;
+      background: var(--surface);
+      color: var(--text);
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     .field-hint {
