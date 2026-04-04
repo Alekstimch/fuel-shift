@@ -655,7 +655,7 @@
     <div class="form-section fu1">
       <label class="field-label">Кому переливаете</label>
       <select id="receiver" onchange="onReceiverChange()">
-        <option value="">— выберите водителя —</option>
+        <option value="">Выберите водителя</option>
       </select>
       <div class="car-hint" id="car-hint">
         <span>🚛</span>
@@ -665,8 +665,8 @@
 
     <div class="form-section fu2">
       <label class="field-label">Количество литров</label>
-      <input type="number" id="liters-create" placeholder="0" min="1" max="2000" step="1"
-             enterkeyhint="next" inputmode="numeric"
+      <input type="text" id="liters-create" placeholder="0" inputmode="numeric" pattern="[0-9]*"
+             enterkeyhint="next"
              onfocus="scrollToField(this)"
              onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('date-create').focus();scrollToField(document.getElementById('date-create'))}">
       <div class="field-hint">Обычно от 30 до 300 л</div>
