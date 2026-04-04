@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>TEST — Входящие</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;
+      --border:#30363d;--border2:#21262d;
+      --accent:#388bfd;--accent-dim:rgba(56,139,253,.14);
+      --green:#3fb950;--green-dim:rgba(63,185,80,.14);
+      --red:#f85149;--red-dim:rgba(248,81,73,.12);
+      --yellow:#d29922;--yellow-dim:rgba(210,153,34,.13);
+      --text:#e6edf3;--text2:#8b949e;--text3:#6e7681;
+      --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+      --radius:10px;--radius-sm:6px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;
+      padding-bottom:max(56px,calc(56px + env(safe-area-inset-bottom)));
+      padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);
+      overflow-x:hidden;}
+    @media(min-width:600px){body{display:flex;justify-content:center;}
+      #main-screen{width:100%;max-width:480px;}}
+
+    /* header */
+    .app-header{padding:16px 16px 0;display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+    .app-wordmark{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;flex:1;}
+    .driver-pill{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border2);border-radius:100px;padding:5px 12px 5px 8px;font-size:13px;color:var(--text2);font-weight:500;}
+    .driver-dot{width:7px;height:7px;background:var(--green);border-radius:50%;flex-shrink:0;}
+
+    /* tabs */
+    .tabs{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--surface);border-bottom:1px solid var(--border);margin-bottom:16px;}
+    .tab-btn{padding:11px 4px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:clamp(11px,3.5vw,14px);font-weight:600;font-family:var(--sans);display:flex;align-items:center;justify-content:center;white-space:nowrap;position:relative;}
+    .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab-inner{position:relative;display:inline-flex;align-items:center;padding-right:14px;}
+    .tab-badge{position:absolute;top:-7px;right:-4px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;border-radius:100px;padding:2px 5px;min-width:18px;text-align:center;line-height:1.4;border:1.5px solid var(--bg);}
+
+    /* list */
+    .list{display:flex;flex-direction:column;gap:10px;padding:0 16px 24px;}
+
+    /* cards */
+    .trf-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+    .trf-card.closed{opacity:.45;border-style:dashed;}
+    .trf-head{padding:14px 14px 12px;border-bottom:1px solid var(--border2);display:flex;align-items:flex-start;gap:12px;}
+    .trf-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent-dim);border:1.5px solid rgba(56,139,253,.3);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;font-family:var(--sans);color:var(--accent);flex-shrink:0;}
+    .trf-sender-name{font-size:16px;font-weight:700;line-height:1.2;margin-bottom:3px;color:var(--text);}
+    .trf-sender-car{font-size:12px;color:var(--text2);}
+    .trf-amount-block{margin-left:auto;text-align:right;flex-shrink:0;}
+    .trf-liters{font-family:var(--mono);font-size:28px;font-weight:600;line-height:1;}
+    .liters-pending{color:var(--text);}
+    .liters-ok{color:var(--green);}
+    .liters-rej{color:var(--red);}
+    .liters-adj{color:var(--yellow);}
+    .trf-liters-unit{font-family:var(--mono);font-size:12px;color:var(--text2);margin-top:2px;}
+    .trf-meta{padding:9px 14px;font-size:11px;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border2);display:flex;gap:14px;}
+
+    /* actions */
+    .trf-actions{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
+    .trf-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .btn-confirm,.btn-reject,.btn-adjust-save{padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;font-family:var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s,transform .1s;}
+    .btn-confirm{background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,.3);}
+    .btn-reject{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,81,73,.3);}
+    .btn-adjust-save{background:var(--yellow-dim);color:var(--yellow);border:1px solid rgba(210,153,34,.3);}
+    .adjust-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;}
+    .adjust-row input{padding:10px 12px;font-size:16px;font-family:var(--mono);font-weight:500;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);width:100%;}
+    .adjust-row input::placeholder{color:var(--text3);font-size:13px;}
+
+    /* closed status */
+    .trf-closed-status{padding:12px 14px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;}
+    .trf-closed-status.ok{color:var(--green);}
+    .trf-closed-status.adj{color:var(--yellow);}
+    .trf-closed-status.rej{color:var(--red);}
+
+    /* test banner */
+    .test-banner{background:var(--yellow-dim);border-bottom:1px solid rgba(210,153,34,.3);padding:8px 16px;font-size:12px;color:var(--yellow);font-family:var(--mono);text-align:center;}
+  </style>
+</head>
+<body>
+<div id="main-screen">
+  <div class="test-banner">⚠️ ТЕСТОВЫЙ РЕЖИМ — моковые данные</div>
+  <div class="app-header">
+    <div class="app-wordmark">FuelShift</div>
+    <div class="driver-pill"><div class="driver-dot"></div><span>Петров Сергей</span></div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn">Создать</button>
+    <button class="tab-btn active">
+      <span class="tab-inner">Входящие<span class="tab-badge">2</span></span>
+    </button>
+    <button class="tab-btn">Мои</button>
+  </div>
+  <div class="list">
+
+    <!-- активная 1 -->
+    <div class="trf-card">
+      <div class="trf-head">
+        <div class="trf-avatar">ИИ</div>
+        <div style="flex:1;min-width:0">
+          <div class="trf-sender-name">Иванов Иван Иванович</div>
+          <div class="trf-sender-car">КАМАЗ У056МВ797</div>
+        </div>
+        <div class="trf-amount-block">
+          <div class="trf-liters liters-pending">3333</div>
+          <div class="trf-liters-unit">литров</div>
+        </div>
+      </div>
+      <div class="trf-meta"><span>📅 01.04.2026</span><span>🕐 04.04.2026 19:26</span></div>
+      <div class="trf-actions">
+        <div class="trf-btn-row">
+          <button class="btn-confirm">✓ Подтвердить</button>
+          <button class="btn-reject">✕ Отклонить</button>
+        </div>
+        <div class="adjust-row">
+          <input type="number" placeholder="Другой объём, л" inputmode="numeric">
+          <button class="btn-adjust-save">Изменить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- активная 2 -->
+    <div class="trf-card">
+      <div class="trf-head">
+        <div class="trf-avatar">МА</div>
+        <div style="flex:1;min-width:0">
+          <div class="trf-sender-name">Морозов Виктор Степан</div>
+          <div class="trf-sender-car">МАЗ М011ММ77</div>
+        </div>
+        <div class="trf-amount-block">
+          <div class="trf-liters liters-pending">80</div>
+          <div class="trf-liters-unit">литров</div>
+        </div>
+      </div>
+      <div class="trf-meta"><span>📅 03.04.2026</span><span>🕐 03.04.2026 09:15</span></div>
+      <div class="trf-actions">
+        <div class="trf-btn-row">
+          <button class="btn-confirm">✓ Подтвердить</button>
+          <button class="btn-reject">✕ Отклонить</button>
+        </div>
+        <div class="adjust-row">
+          <input type="number" placeholder="Другой объём, л" inputmode="numeric">
+          <button class="btn-adjust-save">Изменить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- подтверждена -->
+    <div class="trf-card closed">
+      <div class="trf-head">
+        <div class="trf-avatar">ИИ</div>
+        <div style="flex:1;min-width:0">
+          <div class="trf-sender-name">Иванов Иван Иванович</div>
+          <div class="trf-sender-car">КАМАЗ У056МВ797</div>
+        </div>
+        <div class="trf-amount-block">
+          <div class="trf-liters liters-ok">55</div>
+          <div class="trf-liters-unit">литров</div>
+        </div>
+      </div>
+      <div class="trf-meta"><span>📅 03.04.2026</span><span>🕐 03.04.2026 12:36</span></div>
+      <div class="trf-closed-status ok">✓ Подтверждено</div>
+    </div>
+
+    <!-- скорректирована -->
+    <div class="trf-card closed">
+      <div class="trf-head">
+        <div class="trf-avatar">ВН</div>
+        <div style="flex:1;min-width:0">
+          <div class="trf-sender-name">Все нормально</div>
+          <div class="trf-sender-car">МАЗ В002ВВ77</div>
+        </div>
+        <div class="trf-amount-block">
+          <div class="trf-liters liters-adj">199</div>
+          <div class="trf-liters-unit">литров</div>
+        </div>
+      </div>
+      <div class="trf-meta"><span>📅 03.04.2026</span><span>🕐 03.04.2026 22:20</span></div>
+      <div class="trf-closed-status adj">✏️ Скорректировано: 45 л</div>
+    </div>
+
+    <!-- отклонена -->
+    <div class="trf-card closed">
+      <div class="trf-head">
+        <div class="trf-avatar">ТА</div>
+        <div style="flex:1;min-width:0">
+          <div class="trf-sender-name">Тимченко Александр</div>
+          <div class="trf-sender-car">КАМАЗ У056МВ797</div>
+        </div>
+        <div class="trf-amount-block">
+          <div class="trf-liters liters-rej">5660</div>
+          <div class="trf-liters-unit">литров</div>
+        </div>
+      </div>
+      <div class="trf-meta"><span>📅 04.04.2026</span><span>🕐 04.04.2026 13:56</span></div>
+      <div class="trf-closed-status rej">✕ Отклонено</div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
