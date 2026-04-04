@@ -47,16 +47,7 @@
       padding-bottom: 84px;
     }
     .create-submit-wrap {
-      position: fixed;
-      bottom: 0;
-      left: 0; right: 0;
-      padding: 12px 16px;
-      padding-bottom: max(12px, env(safe-area-inset-bottom));
-      background: linear-gradient(to bottom, transparent, var(--bg) 30%);
-      z-index: 50;
-      /* transform будет управляться через visualViewport */
-      will-change: transform;
-      transition: transform .1s ease;
+      padding: 8px 0 0;
     }
     .create-submit-wrap.hidden { display: none; }
 
@@ -683,13 +674,12 @@
       <label class="field-label">Дата перелива</label>
       <input type="date" id="date-create">
     </div>
-  </div>
 
-  <!-- Фиксированная кнопка отправки -->
-  <div class="create-submit-wrap" id="create-submit-wrap">
-    <button class="btn-primary" id="btn-send" onclick="submitCreate()">
-      <span id="btn-send-text">Отправить заявку</span>
-    </button>
+    <div class="create-submit-wrap" id="create-submit-wrap">
+      <button class="btn-primary" id="btn-send" onclick="submitCreate()">
+        <span id="btn-send-text">Отправить заявку</span>
+      </button>
+    </div>
   </div>
 
   <!-- CONFIRM -->
@@ -789,35 +779,11 @@
     }
   }
 
-  // ── KEYBOARD FIX (visualViewport) ────────────────────────
+  // ── KEYBOARD FIX ─────────────────────────────────────────
   function scrollToField(el) {
     setTimeout(() => {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 300);
-  }
-
-  // Двигаем кнопку отправки вверх вместе с клавиатурой
-  // visualViewport работает на iOS Safari 13+ и Android Chrome 61+
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', _onViewportResize);
-    window.visualViewport.addEventListener('scroll', _onViewportResize);
-  }
-
-  function _onViewportResize() {
-    const btn = document.getElementById('create-submit-wrap');
-    if (!btn || btn.classList.contains('hidden')) return;
-
-    const viewport    = window.visualViewport;
-    const windowH     = window.innerHeight;
-    const viewportH   = viewport.height;
-    const viewportTop = viewport.offsetTop;
-
-    // Смещение = разница между полным окном и видимым вьюпортом
-    // (то есть высота клавиатуры + любые другие перекрытия)
-    const keyboardH = windowH - viewportTop - viewportH;
-    btn.style.transform = keyboardH > 0
-      ? `translateY(-${keyboardH}px)`
-      : 'translateY(0)';
   }
 
   // ── TABS ─────────────────────────────────────────────────
