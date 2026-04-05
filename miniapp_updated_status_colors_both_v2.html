@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Переливы топлива</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:         #0d1117;
+      --surface:    #161b22;
+      --surface2:   #1c2128;
+      --border:     #30363d;
+      --border2:    #21262d;
+      --accent:     #388bfd;
+      --accent-dim: rgba(56,139,253,.14);
+      --green:      #3fb950;
+      --green-dim:  rgba(63,185,80,.14);
+      --red:        #f85149;
+      --red-dim:    rgba(248,81,73,.12);
+      --yellow:     #d29922;
+      --yellow-dim: rgba(210,153,34,.13);
+      --text:       #e6edf3;
+      --text2:      #8b949e;
+      --text3:      #6e7681;
+      --mono:       'IBM Plex Mono', monospace;
+      --sans:       'IBM Plex Sans', sans-serif;
+      --radius:     10px;
+      --radius-sm:  6px;
+    }
+
+```
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: max(56px, calc(56px + env(safe-area-inset-bottom)));
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  overflow-x: hidden;
+}
+@media (min-width: 600px) {
+  body { display: flex; justify-content: center; }
+  #auth-screen, #status-screen, #main-screen { width: 100%; max-width: 480px; }
+}
+
+/* ── ФИКС КЛАВИАТУРЫ ─────────────────────────────── */
+#screen-create {
+  padding-bottom: 84px;
+}
+.create-submit-wrap {
+  padding: 8px 0 0;
+}
+.create-submit-wrap.hidden { display: none; }
+
+/* ── АНИМАЦИИ ─────────────────────────────────── */
+@keyframes fadeUp  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes pulse   { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+@keyframes spin    { to { transform:rotate(360deg); } }
+@keyframes scaleIn { from { opacity:0; transform:scale(.88); } to { opacity:1; transform:scale(1); } }
+
+.fu  { animation: fadeUp .28s ease both; }
+.fu1 { animation: fadeUp .28s .06s ease both; }
+.fu2 { animation: fadeUp .28s .12s ease both; }
+.fu3 { animation: fadeUp .28s .18s ease both; }
+.fu4 { animation: fadeUp .28s .24s ease both; }
+
+/* ── AUTH ─────────────────────────────────────── */
+#auth-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 24px;
+}
+
+.auth-wordmark {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text3);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  animation: fadeUp .3s ease both;
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 40px;
+  animation: fadeUp .3s ease both;
+}
+
+.auth-logo-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.auth-logo-fs {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: 1px;
+}
+.auth-logo-sub {
+  font-family: var(--mono);
+  font-size: 6.5px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+@keyframes lineFlow {
+  0%   { background-position: 0 -100%; }
+  100% { background-position: 0 100%; }
+}
+.auth-divider {
+  width: 2px;
+  height: 64px;
+  flex-shrink: 0;
+  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+  background-size: 100% 200%;
+  background-position: 0 -100%;
+  animation: lineFlow 2.6s ease-in-out infinite;
+}
+
+.auth-title {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.auth-title .line1 { color: var(--text); }
+.auth-title .line2 { color: var(--accent); }
+
+.auth-loader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeUp .3s .18s ease both;
+}
+
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  flex-shrink: 0;
+}
+
+.auth-loader-text {
+  font-size: 13px;
+  color: var(--text2);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.auth-error {
+  display: none;
+  background: var(--red-dim);
+  border: 1px solid rgba(248,81,73,.3);
+  border-radius: var(--radius);
+  padding: 16px;
+  font-size: 14px;
+  color: #ffa8a3;
+  line-height: 1.6;
+  animation: fadeUp .2s ease both;
+}
+
+/* ── STATUS SCREEN ────────────────────────────── */
+#status-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.status-icon {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 20px;
+  animation: scaleIn .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+.status-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  animation: fadeUp .25s .08s ease both;
+}
+
+.status-sub {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.7;
+  max-width: 260px;
+  margin-bottom: 8px;
+  white-space: pre-line;
+  animation: fadeUp .25s .14s ease both;
+}
+
+.status-notify {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(56,139,253,.25);
+  border-radius: 100px;
+  padding: 7px 14px;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 4px;
+  margin-bottom: 20px;
+  animation: fadeUp .25s .20s ease both;
+}
+.status-notify.show { display: flex; }
+
+.status-error-detail {
+  display: none;
+  font-size: 12px;
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid rgba(248,81,73,.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  max-width: 280px;
+  word-break: break-word;
+  text-align: left;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  animation: fadeUp .2s ease both;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 24px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+  animation: fadeUp .25s .26s ease both;
+}
+.btn-back:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── MAIN ─────────────────────────────────────── */
+#main-screen { display: none; }
+
+.app-header {
+  padding: 16px 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.app-wordmark {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.driver-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  padding: 5px 12px 5px 8px;
+  font-size: 13px;
+  color: var(--text2);
+  font-weight: 500;
+  max-width: 200px;
+  overflow: hidden;
+}
+
+.driver-dot {
+  width: 7px; height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.driver-pill-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── TABS ─────────────────────────────────────── */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.tab-btn {
+  padding: 11px 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text2);
+  font-size: clamp(11px, 3.5vw, 14px);
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 100px;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+}
+.tab-badge.show { display: inline-block; }
+
+/* ── SCREENS ──────────────────────────────────── */
+.screen { display: none; padding: 0 16px; }
+.screen.active { display: block; }
+
+/* ── FORM ─────────────────────────────────────── */
+.form-section { margin-bottom: 20px; }
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  margin-bottom: 8px;
+}
+
+select, input[type="number"], input[type="text"], input[type="date"] {
+  width: 100%;
+  padding: 13px 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 16px;
+  font-family: var(--sans);
+  -webkit-appearance: none;
+  transition: border-color .15s;
+}
+input[type="date"] { color-scheme: dark; }
+select:focus, input:focus { outline: none; border-color: var(--accent); }
+select option { background: #161b22; }
+
+input[type="number"], #liters-create {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--text);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.field-hint {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 6px;
+  padding-left: 2px;
+}
+
+/* машина под селектом — без дублирования имени */
+.car-hint {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 7px;
+  padding-left: 2px;
+}
+.car-hint.show { display: flex; }
+
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary:active { opacity: .85; transform: scale(.98); }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── TRANSFER CARDS ───────────────────────────── */
+#confirm-list { display: flex; flex-direction: column; gap: 10px; }
+
+.trf-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  animation: fadeUp .22s ease both;
+}
+.trf-card.closed { opacity: .45; border-style: dashed; }
+.liters-pending { color: var(--text); }
+.liters-ok      { color: var(--green); }
+.liters-rej     { color: var(--red); }
+.liters-adj     { color: var(--yellow); }
+
+.trf-head {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.trf-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1.5px solid rgba(56,139,253,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--sans);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.trf-sender-name { font-size: 16px; font-weight: 700; line-height: 1.2; margin-bottom: 3px; color: var(--text); }
+.trf-sender-car  { font-size: 12px; color: var(--text2); }
+
+.trf-amount-block { margin-left: auto; text-align: right; flex-shrink: 0; }
+.trf-liters {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1;
+}
+.trf-liters-unit { font-family: var(--mono); font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+.trf-meta {
+  padding: 9px 14px;
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--mono);
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  gap: 14px;
+}
+
+.trf-actions { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+
+.trf-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.btn-confirm, .btn-reject, .btn-adjust-save {
+  padding: 11px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--sans);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: opacity .15s, transform .1s;
+}
+.btn-confirm:active, .btn-reject:active, .btn-adjust-save:active { opacity: .8; transform: scale(.97); }
+button:disabled { opacity: .4 !important; cursor: not-allowed !important; }
+
+.btn-confirm     { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+.btn-reject      { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(248,81,73,.3); }
+.btn-adjust-save { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); }
+
+/* adjust row — grid, всегда виден */
+.adjust-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.adjust-row input {
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+/* closed status */
+.trf-closed-status {
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.trf-closed-status.ok  { color: var(--green); }
+.trf-closed-status.adj { color: var(--yellow); }
+.trf-closed-status.rej { color: var(--text2); }
+.trf-closed-status.wait { color: var(--accent); }
+
+/* outgoing card avatar — зелёный оттенок */
+.trf-avatar.out {
+  background: var(--green-dim);
+  border-color: rgba(63,185,80,.3);
+  color: var(--green);
+}
+
+/* ── EMPTY / SPINNER ──────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 56px 20px 32px;
+}
+.empty-state-icon  { font-size: 40px; display: block; margin-bottom: 14px; opacity: .7; }
+.empty-state-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.empty-state-sub   { font-size: 13px; line-height: 1.65; color: var(--text2); max-width: 240px; margin: 0 auto; }
+
+.list-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 56px 20px;
+  color: var(--text3);
+  font-size: 13px;
+}
+```
+
+  </style>
+</head>
+<body>
+
+<!-- AUTH -->
+
+<div id="auth-screen">
+  <div class="auth-logo fu">
+    <div class="auth-logo-img">
+      <div class="auth-logo-fs">FUEL</div>
+      <div class="auth-logo-fs">SHIFT</div>
+      <div class="auth-logo-sub">мониторинг</div>
+    </div>
+    <div class="auth-divider"></div>
+    <div class="auth-title">
+      <div class="line1">Перелив</div>
+      <div class="line2">топлива</div>
+    </div>
+  </div>
+  <div class="auth-loader" id="auth-loader">
+    <div class="spinner"></div>
+    <div class="auth-loader-text">Авторизация…</div>
+  </div>
+  <div class="auth-error" id="auth-error"></div>
+</div>
+
+<!-- STATUS -->
+
+<div id="status-screen">
+  <div class="status-icon" id="status-icon"></div>
+  <div class="status-title" id="status-title"></div>
+  <div class="status-sub"   id="status-sub"></div>
+  <div class="status-notify" id="status-notify">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 16.92V19a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h2.08a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+    </svg>
+    Водитель получит уведомление в Telegram
+  </div>
+  <div class="status-error-detail" id="status-error-detail"></div>
+  <button class="btn-back" onclick="hideStatus()">← Назад</button>
+</div>
+
+<!-- MAIN -->
+
+<div id="main-screen">
+  <div class="app-header fu">
+    <div class="app-wordmark">FuelShift</div>
+    <div class="driver-pill">
+      <div class="driver-dot"></div>
+      <span class="driver-pill-name" id="driver-name-pill">…</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('create')" id="tab-create">Создать</button>
+    <button class="tab-btn"        onclick="switchTab('confirm')" id="tab-confirm">
+      Входящие
+      <span class="tab-badge" id="pending-badge"></span>
+    </button>
+    <button class="tab-btn"        onclick="switchTab('outgoing')" id="tab-outgoing">Мои</button>
+  </div>
+
+  <!-- CREATE -->
+
+  <div class="screen active" id="screen-create">
+    <div class="form-section fu1">
+      <label class="field-label">Кому переливаете</label>
+      <select id="receiver" onchange="onReceiverChange()">
+        <option value="">Выберите водителя</option>
+      </select>
+      <div class="car-hint" id="car-hint">
+        <span>🚛</span>
+        <span id="car-hint-text"></span>
+      </div>
+    </div>
+
+```
+<div class="form-section fu2">
+  <label class="field-label">Количество литров</label>
+  <input type="text" id="liters-create" placeholder="0" inputmode="numeric" pattern="[0-9]*"
+         enterkeyhint="next"
+         onfocus="scrollToField(this)"
+         onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('date-create').focus();scrollToField(document.getElementById('date-create'))}">
+  <div class="field-hint">Обычно от 30 до 300 л</div>
+</div>
+
+<div class="form-section fu3">
+  <label class="field-label">Дата перелива</label>
+  <input type="date" id="date-create">
+</div>
+
+<div class="create-submit-wrap" id="create-submit-wrap">
+  <button class="btn-primary" id="btn-send" onclick="submitCreate()">
+    <span id="btn-send-text">Отправить заявку</span>
+  </button>
+</div>
+```
+
+  </div>
+
+  <!-- CONFIRM -->
+
+  <div class="screen" id="screen-confirm">
+    <div id="confirm-list">
+      <div class="list-spinner"><div class="spinner"></div>Загрузка…</div>
+    </div>
+  </div>
+
+  <!-- OUTGOING -->
+
+  <div class="screen" id="screen-outgoing">
+    <div id="outgoing-list">
+      <div class="list-spinner"><div class="spinner"></div>Загрузка…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ▼▼▼ ВСТАВЬТЕ URL ПОСЛЕ ПУБЛИКАЦИИ APPS SCRIPT ▼▼▼
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwzpMLD-ehBtfD24RKxwLM21yqOrAPc-VvJaiioM6jXGVgHJklRoVlVlrKtJRgeYaXr/exec';
+  // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+  const tg = window.Telegram?.WebApp;
+  const tgUsername = (tg?.initDataUnsafe?.user?.username || '').toLowerCase();
+  if (tg) { tg.ready(); tg.expand(); }
+
+  let currentDriver = null, allDrivers = [], lastTab = 'create';
+
+  // ── INIT ─────────────────────────────────────────────────
+  async function init() {
+    document.getElementById('date-create').valueAsDate = new Date();
+    try {
+      const res = await fetch(API_URL + '?action=getDrivers', { redirect: 'follow' });
+      allDrivers = await res.json();
+      if (!Array.isArray(allDrivers)) throw new Error('Некорректный ответ сервера');
+    } catch (e) {
+      showAuthError('Не удалось подключиться к серверу.<br>Попробуйте позже или обратитесь к диспетчеру.');
+      logError('init', e.message);
+      return;
+    }
+
+    if (tgUsername) {
+      currentDriver = allDrivers.find(d =>
+        (d.tg || '').replace('@', '').toLowerCase() === tgUsername
+      ) || null;
+    }
+
+    if (!currentDriver) {
+      showAuthError(
+        tgUsername
+          ? `Ваш Telegram @${tgUsername} не найден в базе.<br>Обратитесь к диспетчеру.`
+          : 'Откройте приложение через бота в Telegram.'
+      );
+      return;
+    }
+
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display = 'block';
+    document.getElementById('driver-name-pill').textContent = currentDriver.name;
+
+    const sel = document.getElementById('receiver');
+    allDrivers.filter(d => d.id !== currentDriver.id).forEach(d => {
+      const o = document.createElement('option');
+      o.value       = d.id;
+      o.textContent = d.name;
+      o.dataset.car  = d.car  || '';
+      o.dataset.name = d.name || '';
+      sel.appendChild(o);
+    });
+
+    loadIncomingCount();
+  }
+
+  function showAuthError(msg) {
+    document.getElementById('auth-loader').style.display = 'none';
+    const el = document.getElementById('auth-error');
+    el.innerHTML = msg;
+    el.style.display = 'block';
+  }
+
+  // ── RECEIVER PREVIEW ─────────────────────────────────────
+  function onReceiverChange() {
+    const sel  = document.getElementById('receiver');
+    const opt  = sel.options[sel.selectedIndex];
+    const hint = document.getElementById('car-hint');
+
+    if (!opt || !opt.value) {
+      hint.classList.remove('show');
+      return;
+    }
+    const car = opt.dataset.car;
+    if (car) {
+      document.getElementById('car-hint-text').textContent = car;
+      hint.classList.add('show');
+    } else {
+      hint.classList.remove('show');
+    }
+  }
+
+  // ── KEYBOARD FIX ─────────────────────────────────────────
+  function scrollToField(el) {
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+  }
+
+  // ── TABS ─────────────────────────────────────────────────
+  function switchTab(tab) {
+    lastTab = tab;
+    document.getElementById('tab-create').classList.toggle('active',   tab === 'create');
+    document.getElementById('tab-confirm').classList.toggle('active',  tab === 'confirm');
+    document.getElementById('tab-outgoing').classList.toggle('active', tab === 'outgoing');
+    document.getElementById('screen-create').classList.toggle('active',   tab === 'create');
+    document.getElementById('screen-confirm').classList.toggle('active',  tab === 'confirm');
+    document.getElementById('screen-outgoing').classList.toggle('active', tab === 'outgoing');
+    // Кнопка отправки — только на вкладке создания
+    document.getElementById('create-submit-wrap').classList.toggle('hidden', tab !== 'create');
+    if (tab === 'confirm')  loadIncoming();
+    if (tab === 'outgoing') loadOutgoing();
+  }
+
+  // ── CREATE ────────────────────────────────────────────────
+  async function submitCreate() {
+    const receiverId = document.getElementById('receiver').value;
+    const liters     = document.getElementById('liters-create').value;
+    const date       = document.getElementById('date-create').value;
+
+    if (!receiverId)             return showStatus({ ok: false, title: 'Выберите получателя' });
+    if (!liters || +liters <= 0) return showStatus({ ok: false, title: 'Введите количество литров' });
+    if (!date)                   return showStatus({ ok: false, title: 'Укажите дату перелива' });
+
+    const btn = document.getElementById('btn-send');
+    const txt = document.getElementById('btn-send-text');
+    btn.disabled = true;
+    txt.textContent = 'Отправка…';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({
+          action: 'createTransfer',
+          senderId: currentDriver.id,
+          senderName: currentDriver.name,
+          receiverId, liters: +liters, date,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const recv = allDrivers.find(d => d.id === receiverId);
+        showStatus({
+          ok: true,
+          title: 'Заявка отправлена',
+          sub: `${liters} л → ${recv?.name || receiverId}\n\nВодитель подтвердит перелив в приложении.`,
+          showNotify: true,
+        });
+      } else {
+        showStatus({ ok: false, title: 'Ошибка отправки', sub: 'Попробуйте ещё раз', errorDetail: data.error || '' });
+        logError('createTransfer', data.error);
+      }
+    } catch (e) {
+      showStatus({ ok: false, title: 'Ошибка сети', sub: 'Проверьте соединение', errorDetail: e.message });
+      logError('createTransfer/network', e.message);
+    } finally {
+      btn.disabled = false;
+      txt.textContent = 'Отправить заявку';
+    }
+  }
+
+  // ── BADGE (incoming count) ────────────────────────────────
+  async function loadIncomingCount() {
+    try {
+      const res = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id), { redirect: 'follow' });
+      const items = await res.json();
+      if (!Array.isArray(items)) return;
+      const pending = items.filter(t => t.status === 'Создана').length;
+      const badge = document.getElementById('pending-badge');
+      if (pending > 0) { badge.textContent = pending; badge.classList.add('show'); }
+    } catch {}
+  }
+
+  // ── INCOMING LIST ─────────────────────────────────────────
+  async function loadIncoming() {
+    const list = document.getElementById('confirm-list');
+    list.innerHTML = `<div class="list-spinner"><div class="spinner"></div>Загрузка…</div>`;
+    try {
+      const res = await fetch(API_URL + '?action=getTransfers&driverId=' + encodeURIComponent(currentDriver.id), { redirect: 'follow' });
+      const items = await res.json();
+
+      if (!Array.isArray(items) || !items.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-state-icon">✅</span>
+            <div class="empty-state-title">Входящих нет</div>
+            <div class="empty-state-sub">Если вам передавали топливо — попросите водителя создать заявку в приложении</div>
+          </div>`;
+        return;
+      }
+
+      document.getElementById('pending-badge').classList.remove('show');
+      list.innerHTML = '';
+
+      const sorted = [...items].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      sorted.forEach((t, idx) => {
+        const sender = allDrivers.find(d => d.id === t.senderId);
+        const senderName = sender ? sender.name : (t.senderId || '?');
+        const initials = senderName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+        const car = t.senderCar || sender?.car || '';
+        const isPending = t.status === 'Создана';
+
+        let litersClass = 'liters-pending';
+        if (t.status === 'Подтверждена') {
+          litersClass = 'liters-ok';
+        } else if (t.status === 'Отклонена') {
+          litersClass = 'liters-rej';
+        } else if (t.status === 'Скорректирована') {
+          litersClass = 'liters-adj';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'trf-card' + (isPending ? '' : ' closed');
+        card.id = 'trf-' + t.id;
+        card.style.animationDelay = (idx * 0.05) + 's';
+
+        let actionsHtml = '';
+        if (isPending) {
+          actionsHtml = `
+            <div class="trf-actions">
+              <div class="trf-btn-row">
+                <button class="btn-confirm"        onclick="respond('${t.id}','confirm',this)">✓ Подтвердить</button>
+                <button class="btn-reject" onclick="respond('${t.id}','reject',this)">✕ Отклонить</button>
+              </div>
+              <div class="adjust-row">
+                <input type="number" id="adj-${t.id}" placeholder="Другой объём, л" min="1" step="1" inputmode="numeric">
+                <button class="btn-adjust-save" onclick="respondAdjust('${t.id}')">Изменить</button>
+              </div>
+            </div>`;
+        } else {
+          const statusMap = {
+            'Подтверждена':    ['ok',  '✓ Подтверждено'],
+            'Скорректирована': ['adj', `✏️ Скорректировано: ${t.litersFinal} л`],
+            'Отклонена':       ['rej', '✕ Отклонено'],
+          };
+          const [cls, label] = statusMap[t.status] || ['rej', t.status];
+          actionsHtml = `<div class="trf-closed-status ${cls}">${label}</div>`;
+        }
+
+        card.innerHTML = `
+          <div class="trf-head">
+            <div class="trf-avatar">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div class="trf-sender-name">${senderName}</div>
+              ${car ? `<div class="trf-sender-car">${car}</div>` : ''}
+            </div>
+            <div class="trf-amount-block">
+              <div class="trf-liters ${litersClass}">${t.status === 'Скорректирована' ? (t.litersFinal || t.litersClaimed) : t.litersClaimed}</div>
+              <div class="trf-liters-unit">литров</div>
+            </div>
+          </div>
+          <div class="trf-meta">
+            <span>📅 ${t.transferDate || '—'}</span>
+            <span>🕐 ${t.createdAt   || '—'}</span>
+          </div>
+          ${actionsHtml}`;
+
+        list.appendChild(card);
+      });
+    } catch (e) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">⚠️</span>
+          <div class="empty-state-title">Ошибка загрузки</div>
+          <div class="empty-state-sub">Проверьте соединение и попробуйте снова</div>
+        </div>`;
+      logError('loadIncoming', e.message);
+    }
+  }
+
+  // ── RESPOND ──────────────────────────────────────────────
+  async function respond(id, responseType, _btn) {
+    _lockCard(id, true);
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({ action: 'respondTransfer', id, responseType, responderName: currentDriver.name }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        lastTab = 'confirm';
+        const m = responseType === 'confirm'
+          ? { title: 'Подтверждено',  sub: 'Перелив учтён' }
+          : { title: 'Отклонено',     sub: 'Перелив не учтён' };
+        showStatus({ ok: true, ...m });
+      } else {
+        showStatus({ ok: false, title: 'Ошибка', errorDetail: data.error || '' });
+        logError('respondTransfer', data.error);
+        _lockCard(id, false);
+      }
+    } catch (e) {
+      showStatus({ ok: false, title: 'Ошибка сети', errorDetail: e.message });
+      logError('respondTransfer/network', e.message);
+      _lockCard(id, false);
+    }
+  }
+
+  async function respondAdjust(id) {
+    const liters = document.getElementById('adj-' + id)?.value;
+    if (!liters || +liters <= 0) return showStatus({ ok: false, title: 'Введите объём' });
+    _lockCard(id, true);
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({ action: 'respondTransfer', id, responseType: 'adjust', liters: +liters, responderName: currentDriver.name }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        lastTab = 'confirm';
+        showStatus({ ok: true, title: 'Скорректировано', sub: `Принято ${liters} л вместо заявленного объёма` });
+      } else {
+        showStatus({ ok: false, title: 'Ошибка', errorDetail: data.error || '' });
+        logError('respondAdjust', data.error);
+        _lockCard(id, false);
+      }
+    } catch (e) {
+      showStatus({ ok: false, title: 'Ошибка сети', errorDetail: e.message });
+      logError('respondAdjust/network', e.message);
+      _lockCard(id, false);
+    }
+  }
+
+  function _lockCard(id, state) {
+    document.getElementById('trf-' + id)?.querySelectorAll('button, input').forEach(el => el.disabled = state);
+  }
+
+  // ── STATUS SCREEN ─────────────────────────────────────────
+  function showStatus({ ok, title, sub = '', errorDetail = '', showNotify = false }) {
+    document.getElementById('main-screen').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('status-screen').style.display = 'flex';
+
+    document.getElementById('status-icon').textContent  = ok ? '✅' : '❌';
+    document.getElementById('status-title').textContent = title;
+    document.getElementById('status-sub').textContent   = sub;
+
+    document.getElementById('status-notify').classList.toggle('show', ok && showNotify);
+
+    const errEl = document.getElementById('status-error-detail');
+    if (!ok && errorDetail) { errEl.textContent = errorDetail; errEl.style.display = 'block'; }
+    else errEl.style.display = 'none';
+  }
+
+  function hideStatus() {
+    document.getElementById('status-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display   = 'block';
+    if (lastTab === 'create') {
+      document.getElementById('liters-create').value = '';
+      document.getElementById('receiver').value = '';
+      document.getElementById('car-hint').classList.remove('show');
+      document.getElementById('date-create').valueAsDate = new Date();
+    } else if (lastTab === 'outgoing') {
+      switchTab('outgoing');
+    } else {
+      switchTab('confirm');
+    }
+  }
+
+  // ── OUTGOING LIST ─────────────────────────────────────────
+  async function loadOutgoing() {
+    const list = document.getElementById('outgoing-list');
+    list.innerHTML = `<div class="list-spinner"><div class="spinner"></div>Загрузка…</div>`;
+    try {
+      const res = await fetch(API_URL + '?action=getOutgoingTransfers&driverId=' + encodeURIComponent(currentDriver.id), { redirect: 'follow' });
+      const items = await res.json();
+
+      if (!Array.isArray(items) || !items.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-state-icon">📤</span>
+            <div class="empty-state-title">Отправленных нет</div>
+            <div class="empty-state-sub">Здесь появятся заявки которые вы отправили другим водителям</div>
+          </div>`;
+        return;
+      }
+
+      const sortedOut = [...items].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      list.innerHTML = '';
+      sortedOut.forEach((t, idx) => {
+        const receiver = allDrivers.find(d => d.id === t.receiverId);
+        const receiverName = t.receiverName || (receiver ? receiver.name : '?');
+        const initials = receiverName.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+        const car = receiver?.car || '';
+
+        const statusMap = {
+          'Создана':         ['wait', '⏳ Ожидает подтверждения'],
+          'Подтверждена':    ['ok',   '✓ Подтверждено'],
+          'Скорректирована': ['adj',  `✏️ Скорректировано: ${t.litersFinal} л`],
+          'Отклонена':       ['rej',  '✕ Отклонено'],
+        };
+        const [cls, label] = statusMap[t.status] || ['rej', t.status];
+        const isClosed = t.status !== 'Создана';
+
+        let litersClass = 'liters-pending';
+        if (t.status === 'Подтверждена') {
+          litersClass = 'liters-ok';
+        } else if (t.status === 'Отклонена') {
+          litersClass = 'liters-rej';
+        } else if (t.status === 'Скорректирована') {
+          litersClass = 'liters-adj';
+        }
+
+        const displayLiters = t.status === 'Скорректирована'
+          ? (t.litersFinal || t.litersClaimed)
+          : t.litersClaimed;
+
+        if (t.status === 'Создана') {
+          litersClass = 'liters-pending';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'trf-card' + (isClosed ? ' closed' : '');
+        card.style.animationDelay = (idx * 0.05) + 's';
+
+        card.innerHTML = `
+          <div class="trf-head">
+            <div class="trf-avatar out">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div class="trf-sender-name">${receiverName}</div>
+              ${car ? `<div class="trf-sender-car">${car}</div>` : ''}
+            </div>
+            <div class="trf-amount-block">
+              <div class="trf-liters ${litersClass}">${displayLiters}</div>
+              <div class="trf-liters-unit">литров</div>
+            </div>
+          </div>
+          <div class="trf-meta">
+            <span>📅 ${t.transferDate || '—'}</span>
+            <span>🕐 ${t.createdAt || '—'}</span>
+          </div>
+          <div class="trf-closed-status ${cls}">${label}</div>`;
+
+        list.appendChild(card);
+      });
+    } catch (e) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">⚠️</span>
+          <div class="empty-state-title">Ошибка загрузки</div>
+          <div class="empty-state-sub">Проверьте соединение и попробуйте снова</div>
+        </div>`;
+      logError('loadOutgoing', e.message);
+    }
+  }
+
+  // ── LOG ERROR ─────────────────────────────────────────────
+  async function logError(context, message) {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'logError', context, message,
+          user: currentDriver?.name || tgUsername || 'unknown',
+          ts: new Date().toISOString(),
+        }),
+      });
+    } catch {}
+  }
+
+  init();
+</script>
+
+</body>
+</html>
