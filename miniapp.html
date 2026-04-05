@@ -896,6 +896,15 @@ button:disabled { opacity: .4 !important; cursor: not-allowed !important; }
         const car = t.senderCar || sender?.car || '';
         const isPending = t.status === 'Создана';
 
+        let litersClass = 'liters-pending';
+        if (t.status === 'Подтверждена') {
+          litersClass = 'liters-ok';
+        } else if (t.status === 'Отклонена') {
+          litersClass = 'liters-rej';
+        } else if (t.status === 'Скорректирована') {
+          litersClass = 'liters-adj';
+        }
+
         const card = document.createElement('div');
         card.className = 'trf-card' + (isPending ? '' : ' closed');
         card.id = 'trf-' + t.id;
@@ -932,7 +941,7 @@ button:disabled { opacity: .4 !important; cursor: not-allowed !important; }
               ${car ? `<div class="trf-sender-car">${car}</div>` : ''}
             </div>
             <div class="trf-amount-block">
-              <div class="trf-liters ${isPending ? 'liters-pending' : (t.status === 'Подтверждена' ? 'liters-ok' : t.status === 'Отклонена' ? 'liters-rej' : 'liters-adj')}">${t.litersClaimed}</div>
+              <div class="trf-liters ${litersClass}">${t.status === 'Скорректирована' ? (t.litersFinal || t.litersClaimed) : t.litersClaimed}</div>
               <div class="trf-liters-unit">литров</div>
             </div>
           </div>
@@ -1080,6 +1089,23 @@ button:disabled { opacity: .4 !important; cursor: not-allowed !important; }
         const [cls, label] = statusMap[t.status] || ['rej', t.status];
         const isClosed = t.status !== 'Создана';
 
+        let litersClass = 'liters-pending';
+        if (t.status === 'Подтверждена') {
+          litersClass = 'liters-ok';
+        } else if (t.status === 'Отклонена') {
+          litersClass = 'liters-rej';
+        } else if (t.status === 'Скорректирована') {
+          litersClass = 'liters-adj';
+        }
+
+        const displayLiters = t.status === 'Скорректирована'
+          ? (t.litersFinal || t.litersClaimed)
+          : t.litersClaimed;
+
+        if (t.status === 'Создана') {
+          litersClass = 'liters-pending';
+        }
+
         const card = document.createElement('div');
         card.className = 'trf-card' + (isClosed ? ' closed' : '');
         card.style.animationDelay = (idx * 0.05) + 's';
@@ -1092,7 +1118,7 @@ button:disabled { opacity: .4 !important; cursor: not-allowed !important; }
               ${car ? `<div class="trf-sender-car">${car}</div>` : ''}
             </div>
             <div class="trf-amount-block">
-              <div class="trf-liters" style="color:var(--green)">${t.litersClaimed}</div>
+              <div class="trf-liters ${litersClass}">${displayLiters}</div>
               <div class="trf-liters-unit">литров</div>
             </div>
           </div>
