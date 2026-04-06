@@ -579,7 +579,7 @@ body {
 .mini-table tr:last-child td { border-bottom: none; }
 .mini-table tbody tr:hover { background: var(--surface3); }
 
-.detail-comment {
+.detail-status-text { /* [CHANGE v2] было: .detail-comment */
   background: var(--surface2);
   border-left: 3px solid var(--accent);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
@@ -587,6 +587,18 @@ body {
   font-size: 13px;
   color: var(--text2);
   line-height: 1.6;
+}
+
+/* [NEW v2] блок суммы к удержанию */
+.detail-penalty {
+  background: var(--red-dim);
+  border-left: 3px solid var(--red);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+  font-weight: 600;
 }
 
 .detail-meta-grid {
@@ -1058,10 +1070,18 @@ body {
           </div>
         </div>
 
-        ${result.comment ? `
+        ${result.statusText ? `
         <div class="detail-section">
-          <div class="detail-section-title">Комментарий системы</div>
-          <div class="detail-comment">${result.comment}</div>
+          <div class="detail-section-title">Анализ вахты</div>
+          <!-- [CHANGE v2] было: detail-comment / result.comment -->
+          <div class="detail-status-text">${result.statusText}</div>
+        </div>` : ''}
+
+        ${result.penalty !== null && result.penalty !== undefined ? `
+        <div class="detail-section">
+          <!-- [NEW v2] блок суммы к удержанию -->
+          <div class="detail-section-title">Недостача</div>
+          <div class="detail-penalty">Сумма к удержанию: ${result.penalty.toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2})} руб.</div>
         </div>` : ''}
 
         <!-- MONITORING -->
