@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FuelShift — Диспетчер</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --surface3: #21262d;
+      --border: #30363d;
+      --border2: #21262d;
+      --accent: #388bfd;
+      --accent-dim: rgba(56,139,253,.12);
+      --green: #3fb950;
+      --green-dim: rgba(63,185,80,.12);
+      --red: #f85149;
+      --red-dim: rgba(248,81,73,.10);
+      --yellow: #d29922;
+      --yellow-dim: rgba(210,153,34,.12);
+      --text: #e6edf3;
+      --text2: #8b949e;
+      --text3: #6e7681;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 12px 28px rgba(0,0,0,.18);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--sans); }
+    body { min-height: 100vh; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      height: 56px;
+      background: rgba(22,27,34,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 22px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 240px; }
+    .brand-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 18px rgba(56,139,253,.55);
+    }
+    .brand-title { font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+    .brand-sub { color: var(--text3); font-size: 12px; }
+
+    .topbar-center {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px;
+      border-radius: 999px; border: 1px solid var(--border); background: var(--surface2);
+      color: var(--text2); font-size: 12px;
+    }
+
+    .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      height: 36px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: .15s ease; transition-property: background, border-color, color, transform;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover { filter: brightness(1.05); color: #fff; }
+    .btn.ghost { background: transparent; }
+    .btn.small { height: 30px; padding: 0 10px; font-size: 12px; }
+
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 56px); }
+
+    .sidebar {
+      border-right: 1px solid var(--border); background: var(--surface); padding: 18px 14px;
+      position: sticky; top: 56px; height: calc(100vh - 56px); overflow: auto;
+    }
+
+    .nav-group { margin-bottom: 20px; }
+    .nav-title {
+      color: var(--text3); font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; padding: 0 10px 8px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 12px;
+      border-radius: 10px; color: var(--text2); font-size: 14px; text-decoration: none; margin-bottom: 6px;
+      border: 1px solid transparent; cursor: pointer; background: transparent;
+    }
+    .nav-item.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(56,139,253,.18); }
+
+    .content { padding: 24px; display: grid; gap: 22px; }
+
+    .hero { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
+    .hero-title { font-size: 28px; font-weight: 700; line-height: 1.1; margin: 0 0 8px; }
+    .hero-sub { color: var(--text2); font-size: 14px; line-height: 1.6; max-width: 780px; margin: 0; }
+    .quick-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+    .summary-card, .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .summary-card { padding: 16px 18px; border-left: 3px solid var(--accent); }
+    .summary-card.green { border-left-color: var(--green); }
+    .summary-card.yellow { border-left-color: var(--yellow); }
+    .summary-card.red { border-left-color: var(--red); }
+    .summary-label {
+      color: var(--text3); text-transform: uppercase; letter-spacing: .8px; font-size: 11px; font-weight: 700; margin-bottom: 10px;
+    }
+    .summary-value { font-family: var(--mono); font-size: 34px; font-weight: 600; line-height: 1; margin-bottom: 6px; }
+    .summary-note { color: var(--text2); font-size: 12px; }
+
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 16px 18px; border-bottom: 1px solid var(--border2);
+    }
+    .card-title { font-size: 15px; font-weight: 700; }
+    .card-sub { color: var(--text3); font-size: 12px; }
+    .card-body { padding: 16px 18px 18px; }
+
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .input, .select, .textarea {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); padding: 11px 12px; font: inherit;
+    }
+    .textarea {
+      min-height: 150px; resize: vertical; font-family: var(--mono); font-size: 12px; line-height: 1.55;
+    }
+
+    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+    .field { display: grid; gap: 6px; }
+    .label {
+      color: var(--text3); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px;
+    }
+
+    .table { width: 100%; border-collapse: collapse; overflow: hidden; }
+    .table th {
+      color: var(--text3); text-transform: uppercase; font-size: 11px; letter-spacing: .6px; text-align: left;
+      padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface2);
+    }
+    .table td { padding: 12px; border-bottom: 1px solid var(--border2); font-size: 13px; vertical-align: middle; }
+    .table tr:last-child td { border-bottom: none; }
+
+    .status {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
+    .status.blue { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(56,139,253,.22); }
+    .status.green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.22); }
+    .status.yellow { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(210,153,34,.22); }
+    .status.red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,81,73,.22); }
+
+    .mono { font-family: var(--mono); }
+    .muted { color: var(--text2); }
+    .small { font-size: 12px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1.15fr .85fr; gap: 22px; }
+    .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .dropzone {
+      border: 1px dashed var(--border); border-radius: 12px; background: var(--surface2);
+      padding: 18px; min-height: 168px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px;
+    }
+    .dropzone-title { font-size: 14px; font-weight: 700; margin: 0 0 6px; }
+    .dropzone-sub { font-size: 13px; color: var(--text2); line-height: 1.55; margin: 0; }
+
+    .kpi-list { display: grid; gap: 10px; }
+    .kpi-row {
+      display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 10px;
+      background: var(--surface2); border: 1px solid var(--border2); font-size: 13px;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: grid; gap: 22px; }
+
+    .tabs {
+      display: inline-flex; background: var(--surface2); border: 1px solid var(--border); padding: 4px; border-radius: 12px; gap: 4px;
+    }
+    .tab {
+      border: none; background: transparent; color: var(--text2); padding: 8px 12px; border-radius: 9px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .tab.active { background: var(--accent-dim); color: var(--accent); }
+
+    .banner {
+      padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(56,139,253,.2);
+      background: linear-gradient(135deg, rgba(56,139,253,.12), rgba(56,139,253,.04));
+      color: var(--text2); line-height: 1.6; font-size: 13px;
+    }
+
+    .mini-cards { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .mini-card {
+      background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 14px;
+    }
+    .mini-card-title { color: var(--text3); font-size: 11px; text-transform: uppercase; letter-spacing: .7px; font-weight: 700; margin-bottom: 8px; }
+    .mini-card-value { font-family: var(--mono); font-size: 22px; font-weight: 600; }
+    .mini-card-note { color: var(--text2); font-size: 12px; margin-top: 6px; }
+
+    .actions-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    @media (max-width: 1200px) {
+      .grid-2, .section-grid { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .mini-cards { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .summary-grid, .mini-cards, .field-grid, .split { grid-template-columns: 1fr; }
+      .hero { flex-direction: column; }
+      .quick-actions { justify-content: flex-start; }
+      .topbar { flex-wrap: wrap; height: auto; padding: 12px 16px; }
+      .topbar-actions, .topbar-center { margin-left: 0; }
+      .content { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-title">FUELSHIFT</div>
+        <div class="brand-sub">Панель диспетчера</div>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="pill">Обновлено 07.04.2026 14:46</div>
+      <div class="pill">Парк: основной</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn">Импорт XLS</button>
+      <button class="btn primary">Открыть вахту</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="nav-group">
+        <div class="nav-title">Навигация</div>
+        <button class="nav-item active" data-screen="overview">Обзор</button>
+        <button class="nav-item" data-screen="shifts">Вахты</button>
+        <button class="nav-item" data-screen="drivers">Водители</button>
+        <button class="nav-item" data-screen="vehicles">Автомобили</button>
+        <button class="nav-item" data-screen="imports">Импорт данных</button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">Операции</div>
+        <button class="nav-item" data-screen="overview">Новая вахта</button>
+        <button class="nav-item" data-screen="imports">Загрузить мониторинг</button>
+        <button class="nav-item" data-screen="imports">Загрузить карты</button>
+        <button class="nav-item" data-screen="shifts">Пересчитать итоги</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="hero">
+        <div>
+          <h1 class="hero-title">Единая страница диспетчера</h1>
+          <p class="hero-sub">
+            Операционная панель для ежедневной работы: справочники, открытие и закрытие вахт, ручной импорт данных из Excel, обзор проблем и быстрые переходы к нужным действиям. Визуально продолжает текущий дашборд руководителя, но добавляет рабочий слой для диспетчера.
+          </p>
+        </div>
+        <div class="quick-actions">
+          <button class="btn">Добавить водителя</button>
+          <button class="btn">Добавить авто</button>
+          <button class="btn">Закрыть вахту</button>
+          <button class="btn primary">Создать вахту</button>
+        </div>
+      </section>
+
+      <section class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Активные вахты</div>
+          <div class="summary-value">18</div>
+          <div class="summary-note">сейчас в работе</div>
+        </div>
+        <div class="summary-card green">
+          <div class="summary-label">Водители</div>
+          <div class="summary-value">26</div>
+          <div class="summary-note">22 активных, 4 резерв</div>
+        </div>
+        <div class="summary-card yellow">
+          <div class="summary-label">Не привязано</div>
+          <div class="summary-value">14</div>
+          <div class="summary-note">мониторинг и карты ждут проверки</div>
+        </div>
+        <div class="summary-card red">
+          <div class="summary-label">Недостача</div>
+          <div class="summary-value">3</div>
+          <div class="summary-note">вахты требуют внимания</div>
+        </div>
+      </section>
+
+      <div class="banner">
+        Сейчас это интерактивный макет. Логика разделов уже разложена по экранам: можно оценить структуру интерфейса, порядок блоков и понять, какой экран первым превращать в рабочий CRUD.
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-screen="overview">Обзор</button>
+        <button class="tab" data-screen="shifts">Вахты</button>
+        <button class="tab" data-screen="drivers">Водители</button>
+        <button class="tab" data-screen="vehicles">Автомобили</button>
+        <button class="tab" data-screen="imports">Импорт</button>
+      </div>
+
+      <section id="screen-overview" class="screen active">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Управление вахтами</div>
+                <div class="card-sub">Открытие, закрытие и контроль текущего статуса</div>
+              </div>
+              <button class="btn primary" onclick="goScreen('shifts')">Новая вахта</button>
+            </div>
+            <div class="card-body">
+              <div class="toolbar">
+                <input class="input" placeholder="Поиск по водителю, авто, госномеру" />
+                <select class="select" style="max-width:180px">
+                  <option>Все статусы</option>
+                  <option>Активна</option>
+                  <option>Закрыта</option>
+                  <option>Требует проверки</option>
+                </select>
+              </div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Водитель</th>
+                    <th>Авто</th>
+                    <th>Период</th>
+                    <th>Статус</th>
+                    <th>Действие</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Иванов И.И.</td>
+                    <td class="mono">КАМАЗ • А123БВ777</td>
+                    <td class="mono">01.04 — 15.04</td>
+                    <td><span class="status blue">● Активна</span></td>
+                    <td><button class="btn small">Закрыть</button></td>
+                  </tr>
+                  <tr>
+                    <td>Петров П.П.</td>
+                    <td class="mono">МАЗ • Б456ГД777</td>
+                    <td class="mono">25.03 — 07.04</td>
+                    <td><span class="status yellow">? Проверить</span></td>
+                    <td><button class="btn small">Открыть</button></td>
+                  </tr>
+                  <tr>
+                    <td>Сидоров С.С.</td>
+                    <td class="mono">SITRAK • Е901КК777</td>
+                    <td class="mono">20.03 — 04.04</td>
+                    <td><span class="status red">⚠ Недостача</span></td>
+                    <td><button class="btn small">Детали</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Быстрые действия</div>
+                <div class="card-sub">Частые операции без перехода по разделам</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="kpi-list">
+                <div class="kpi-row"><span>Открыть новую вахту</span><button class="btn primary small" onclick="goScreen('shifts')">Открыть</button></div>
+                <div class="kpi-row"><span>Закрыть активную вахту</span><button class="btn small">Выбрать</button></div>
+                <div class="kpi-row"><span>Внести мониторинг из Excel</span><button class="btn small" onclick="goScreen('imports')">Загрузить</button></div>
+                <div class="kpi-row"><span>Внести данные карт из Excel</span><button class="btn small" onclick="goScreen('imports')">Загрузить</button></div>
+                <div class="kpi-row"><span>Запустить пересчёт</span><button class="btn small">Пересчитать</button></div>
+                <div class="kpi-row"><span>Проверить неподтверждённые переливы</span><button class="btn small">Открыть</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Очередь проблем</div>
+                <div class="card-sub">Что нужно разобрать в первую очередь</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Тип</th>
+                    <th>Описание</th>
+                    <th>Статус</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Мониторинг</td>
+                    <td>14 строк не привязаны к вахтам за 06.04</td>
+                    <td><span class="status yellow">Нужно разобрать</span></td>
+                  </tr>
+                  <tr>
+                    <td>Карты</td>
+                    <td>У двух строк не заполнена цена за литр</td>
+                    <td><span class="status yellow">Нужно разобрать</span></td>
+                  </tr>
+                  <tr>
+                    <td>Вахта</td>
+                    <td>Вахта SHF_24018 показывает недостачу сверх порога</td>
+                    <td><span class="status red">Критично</span></td>
+                  </tr>
+                  <tr>
+                    <td>Перелив</td>
+                    <td>5 заявок ожидают подтверждения водителями</td>
+                    <td><span class="status blue">Ожидает</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Сводка по операционному дню</div>
+                <div class="card-sub">Импорты, привязки, закрытия и пересчёты</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="kpi-list">
+                <div class="kpi-row"><span>Импорт мониторинга</span><span class="mono">1 файл / 248 строк</span></div>
+                <div class="kpi-row"><span>Импорт карт</span><span class="mono">1 файл / 81 строка</span></div>
+                <div class="kpi-row"><span>Привязано успешно</span><span class="mono">315</span></div>
+                <div class="kpi-row"><span>Не привязано</span><span class="mono">14</span></div>
+                <div class="kpi-row"><span>Закрыто вахт сегодня</span><span class="mono">6</span></div>
+                <div class="kpi-row"><span>Пересчитано вахт</span><span class="mono">9</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-shifts" class="screen">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Открыть новую вахту</div>
+                <div class="card-sub">Форма диспетчера для быстрого старта новой смены</div>
+              </div>
+              <button class="btn primary">Сохранить вахту</button>
+            </div>
+            <div class="card-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label class="label">Водитель</label>
+                  <select class="select">
+                    <option>Иванов Иван Иванович</option>
+                    <option>Петров Пётр Петрович</option>
+                    <option>Сидоров Сергей Сергеевич</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="label">Автомобиль</label>
+                  <select class="select">
+                    <option>КАМАЗ • А123БВ777</option>
+                    <option>МАЗ • Б456ГД777</option>
+                    <option>SITRAK • Е901КК777</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="label">Дата начала</label>
+                  <input class="input" type="date" value="2026-04-07" />
+                </div>
+                <div class="field">
+                  <label class="label">Дата окончания</label>
+                  <input class="input" type="date" value="2026-04-21" />
+                </div>
+                <div class="field">
+                  <label class="label">Пробег на начало, км</label>
+                  <input class="input mono" value="102540" />
+                </div>
+                <div class="field">
+                  <label class="label">Топливо на начало, л</label>
+                  <input class="input mono" value="145" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Закрыть вахту</div>
+                <div class="card-sub">Фиксация фактических данных по окончанию смены</div>
+              </div>
+              <button class="btn">Закрыть вахту</button>
+            </div>
+            <div class="card-body">
+              <div class="field-grid">
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label class="label">Активная вахта</label>
+                  <select class="select">
+                    <option>SHF_24081 — Иванов И.И. — КАМАЗ А123БВ777</option>
+                    <option>SHF_24082 — Петров П.П. — МАЗ Б456ГД777</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="label">Пробег на конец, км</label>
+                  <input class="input mono" value="106920" />
+                </div>
+                <div class="field">
+                  <label class="label">Топливо на конец, л</label>
+                  <input class="input mono" value="81" />
+                </div>
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label class="label">Комментарий</label>
+                  <input class="input" placeholder="Например: водитель передал авто в парк, данные по мониторингу будут позже" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Список вахт</div>
+              <div class="card-sub">Рабочий журнал диспетчера с фильтрами и действиями</div>
+            </div>
+            <div class="actions-row">
+              <button class="btn">Только активные</button>
+              <button class="btn">Требует проверки</button>
+              <button class="btn primary">Пересчитать</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Водитель</th>
+                  <th>Авто</th>
+                  <th>Период</th>
+                  <th>Отклонение</th>
+                  <th>Статус</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono">SHF_24081</td>
+                  <td>Иванов И.И.</td>
+                  <td class="mono">КАМАЗ А123БВ777</td>
+                  <td class="mono">07.04 — 21.04</td>
+                  <td class="mono muted">—</td>
+                  <td><span class="status blue">Активна</span></td>
+                  <td><button class="btn small">Закрыть</button></td>
+                </tr>
+                <tr>
+                  <td class="mono">SHF_24074</td>
+                  <td>Петров П.П.</td>
+                  <td class="mono">МАЗ Б456ГД777</td>
+                  <td class="mono">25.03 — 07.04</td>
+                  <td class="mono">+6.2</td>
+                  <td><span class="status green">Норма</span></td>
+                  <td><button class="btn small">Детали</button></td>
+                </tr>
+                <tr>
+                  <td class="mono">SHF_24069</td>
+                  <td>Сидоров С.С.</td>
+                  <td class="mono">SITRAK Е901КК777</td>
+                  <td class="mono">20.03 — 04.04</td>
+                  <td class="mono">+18.4</td>
+                  <td><span class="status red">Недостача</span></td>
+                  <td><button class="btn small">Разобрать</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-drivers" class="screen">
+        <div class="section-grid">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Управление водителями</div>
+                <div class="card-sub">Добавление, редактирование и привязка Telegram</div>
+              </div>
+              <button class="btn primary">Сохранить</button>
+            </div>
+            <div class="card-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label class="label">ФИО</label>
+                  <input class="input" value="Иванов Иван Иванович" />
+                </div>
+                <div class="field">
+                  <label class="label">Телефон</label>
+                  <input class="input mono" value="+79001234567" />
+                </div>
+                <div class="field">
+                  <label class="label">Telegram username</label>
+                  <input class="input mono" value="@ivanov_drv" />
+                </div>
+                <div class="field">
+                  <label class="label">Статус</label>
+                  <select class="select">
+                    <option>Работает</option>
+                    <option>Резерв</option>
+                    <option>Уволен</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Что должно быть на этом экране</div>
+                <div class="card-sub">Состав реального CRUD для следующего шага</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="kpi-list">
+                <div class="kpi-row"><span>Поиск по ФИО / телефону / Telegram</span><span>Да</span></div>
+                <div class="kpi-row"><span>Статус водителя</span><span>Да</span></div>
+                <div class="kpi-row"><span>История вахт</span><span>Опционально</span></div>
+                <div class="kpi-row"><span>Перепривязка Telegram</span><span>Да</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Справочник водителей</div>
+              <div class="card-sub">Полный список с быстрым переходом к редактированию</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="toolbar">
+              <input class="input" placeholder="Поиск по ФИО, телефону, Telegram" />
+              <select class="select" style="max-width:200px">
+                <option>Все статусы</option>
+                <option>Работает</option>
+                <option>На вахте</option>
+                <option>Резерв</option>
+              </select>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ФИО</th>
+                  <th>Телефон</th>
+                  <th>Telegram</th>
+                  <th>Статус</th>
+                  <th>Текущая вахта</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Иванов Иван Иванович</td>
+                  <td class="mono">+7 900 123-45-67</td>
+                  <td class="mono">@ivanov_drv</td>
+                  <td><span class="status green">Работает</span></td>
+                  <td class="mono">SHF_24081</td>
+                </tr>
+                <tr>
+                  <td>Петров Пётр Петрович</td>
+                  <td class="mono">+7 900 765-43-21</td>
+                  <td class="mono">@petrov_drv</td>
+                  <td><span class="status blue">На вахте</span></td>
+                  <td class="mono">SHF_24074</td>
+                </tr>
+                <tr>
+                  <td>Фёдоров Алексей Игоревич</td>
+                  <td class="mono">+7 905 222-11-44</td>
+                  <td class="mono">@fedorov_drv</td>
+                  <td><span class="status yellow">Резерв</span></td>
+                  <td class="muted">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-vehicles" class="screen">
+        <div class="section-grid">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Управление автомобилями</div>
+                <div class="card-sub">Марка, госномер, норма расхода и номер карты</div>
+              </div>
+              <button class="btn primary">Сохранить</button>
+            </div>
+            <div class="card-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label class="label">Госномер</label>
+                  <input class="input mono" value="А123БВ777" />
+                </div>
+                <div class="field">
+                  <label class="label">Марка / модель</label>
+                  <input class="input" value="КАМАЗ 65115" />
+                </div>
+                <div class="field">
+                  <label class="label">Номер топливной карты</label>
+                  <input class="input mono" value="6037440091" />
+                </div>
+                <div class="field">
+                  <label class="label">Норма, л/100 км</label>
+                  <input class="input mono" value="28.0" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Состояние автопарка</div>
+                <div class="card-sub">Операционный минимум для диспетчера</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="mini-cards">
+                <div class="mini-card">
+                  <div class="mini-card-title">Всего авто</div>
+                  <div class="mini-card-value">31</div>
+                  <div class="mini-card-note">в базе</div>
+                </div>
+                <div class="mini-card">
+                  <div class="mini-card-title">На линии</div>
+                  <div class="mini-card-value">18</div>
+                  <div class="mini-card-note">активные вахты</div>
+                </div>
+                <div class="mini-card">
+                  <div class="mini-card-title">Без карты</div>
+                  <div class="mini-card-value">2</div>
+                  <div class="mini-card-note">нужно заполнить</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Справочник автомобилей</div>
+              <div class="card-sub">Поиск по номеру, марке и привязке карты</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="toolbar">
+              <input class="input" placeholder="Поиск по госномеру, марке, карте" />
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Госномер</th>
+                  <th>Марка/модель</th>
+                  <th>Карта</th>
+                  <th>Норма</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono">А123БВ777</td>
+                  <td>КАМАЗ 65115</td>
+                  <td class="mono">6037 44•• ••91</td>
+                  <td class="mono">28.0</td>
+                  <td><span class="status blue">На линии</span></td>
+                </tr>
+                <tr>
+                  <td class="mono">Б456ГД777</td>
+                  <td>МАЗ 6501</td>
+                  <td class="mono">6037 44•• ••15</td>
+                  <td class="mono">30.0</td>
+                  <td><span class="status blue">На линии</span></td>
+                </tr>
+                <tr>
+                  <td class="mono">Е901КК777</td>
+                  <td>SITRAK C7H</td>
+                  <td class="mono">6037 44•• ••42</td>
+                  <td class="mono">31.5</td>
+                  <td><span class="status green">Свободен</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-imports" class="screen">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Ручной импорт данных</div>
+              <div class="card-sub">Пока через copy-paste из Excel. Позже эти блоки можно заменить на API / автоимпорт</div>
+            </div>
+            <button class="btn">История импортов</button>
+          </div>
+          <div class="card-body split">
+            <div class="dropzone">
+              <div>
+                <h3 class="dropzone-title">Мониторинг</h3>
+                <p class="dropzone-sub">Вставка сырых строк из Excel. После вставки — обработка, привязка к вахтам и показ проблемных строк.</p>
+              </div>
+              <textarea class="textarea" placeholder="Скопируйте строки мониторинга сюда..."></textarea>
+              <div style="display:flex; gap:10px; flex-wrap:wrap">
+                <button class="btn primary">Обработать мониторинг</button>
+                <button class="btn">Проверить привязку</button>
+              </div>
+            </div>
+
+            <div class="dropzone">
+              <div>
+                <h3 class="dropzone-title">Топливные карты</h3>
+                <p class="dropzone-sub">Вставка строк по заправкам из Excel. Дальше — привязка по карте и дате, затем участие в расчёте вахты.</p>
+              </div>
+              <textarea class="textarea" placeholder="Скопируйте строки по картам сюда..."></textarea>
+              <div style="display:flex; gap:10px; flex-wrap:wrap">
+                <button class="btn primary">Обработать карты</button>
+                <button class="btn">Показать ошибки</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Результат последнего импорта</div>
+                <div class="card-sub">Быстрый просмотр качества обработки</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="mini-cards">
+                <div class="mini-card">
+                  <div class="mini-card-title">Мониторинг</div>
+                  <div class="mini-card-value">248</div>
+                  <div class="mini-card-note">строк обработано</div>
+                </div>
+                <div class="mini-card">
+                  <div class="mini-card-title">Карты</div>
+                  <div class="mini-card-value">81</div>
+                  <div class="mini-card-note">строка обработана</div>
+                </div>
+                <div class="mini-card">
+                  <div class="mini-card-title">Ошибки</div>
+                  <div class="mini-card-value">4</div>
+                  <div class="mini-card-note">требуют ручной проверки</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Что потом заменить на API</div>
+                <div class="card-sub">Эволюция текущего ручного процесса</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="kpi-list">
+                <div class="kpi-row"><span>Мониторинг</span><span>Excel → API Автовектор</span></div>
+                <div class="kpi-row"><span>Карты</span><span>Excel → API процессинга</span></div>
+                <div class="kpi-row"><span>Обработка</span><span>Локальная → Edge Function</span></div>
+                <div class="kpi-row"><span>Лог ошибок</span><span>Встроенный журнал</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const screens = ['overview', 'shifts', 'drivers', 'vehicles', 'imports'];
+
+    function goScreen(name) {
+      screens.forEach(screen => {
+        document.getElementById(`screen-${screen}`)?.classList.toggle('active', screen === name);
+      });
+      document.querySelectorAll('[data-screen]').forEach(el => {
+        el.classList.toggle('active', el.dataset.screen === name);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.querySelectorAll('[data-screen]').forEach(el => {
+      el.addEventListener('click', () => goScreen(el.dataset.screen));
+    });
+  </script>
+</body>
+</html>
